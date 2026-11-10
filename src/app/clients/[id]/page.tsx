@@ -9,6 +9,7 @@ import { Field, inputClass } from "@/components/field";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { setShareAction, updateFileAction } from "@/app/clients/actions";
 import { ClientCards, ClientSessions } from "@/components/client-extras";
+import { ClientPayments } from "@/components/client-payments";
 
 export default function ClientPage({ params }: PageProps<"/clients/[id]">) {
   return (
@@ -87,6 +88,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         </dl>
       </Card>
 
+      <ClientPayments clientId={id} rate={client.rate} />
       <ClientCards clientId={id} method={client.payment_method} />
       <ClientSessions clientId={id} />
 
