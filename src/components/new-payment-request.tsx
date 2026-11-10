@@ -18,6 +18,13 @@ export function NewPaymentRequest({ clientId, rate }: { clientId: string; rate: 
           <option value="card10">כרטיסייה 10 · {formatShekel(CARD_PRICE.card10)}</option>
         </select>
       </label>
+      <label className="flex flex-[0_1_160px] flex-col gap-1 text-[13px] text-muted">
+        אמצעי תשלום
+        <select name="group" defaultValue="100" className={inputClass + " bg-white"}>
+          <option value="100">כרטיס אשראי</option>
+          <option value="120">ביט</option>
+        </select>
+      </label>
       <button
         type="submit"
         disabled={pending}

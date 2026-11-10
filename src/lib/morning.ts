@@ -58,6 +58,9 @@ export type PaymentFormInput = {
   failureUrl: string;
   notifyUrl: string;
   custom?: string;
+  // Payment method on the form. Required by the Grow (משולם) plugin:
+  // 100 credit card, 120 Bit, 150 Google Pay, 160 Apple Pay.
+  group?: number;
 };
 
 // Creates a hosted payment form. When paid, Morning issues a tax
@@ -81,6 +84,7 @@ export async function createPaymentForm(input: PaymentFormInput): Promise<string
       failureUrl: input.failureUrl,
       notifyUrl: input.notifyUrl,
       custom: input.custom,
+      group: input.group ?? 100,
     }),
     cache: "no-store",
   });

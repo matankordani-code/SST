@@ -81,6 +81,7 @@ export async function createPaymentRequestAction(
       failureUrl: `${base}/pay/failed`,
       notifyUrl: `${base}/api/morning/notify?r=${req.id}&t=${token}`,
       custom: req.id,
+      group: fd.get("group") === "120" ? 120 : 100,
     });
     await supabase.from("payment_requests").update({ url }).eq("id", req.id);
   } catch (e) {
