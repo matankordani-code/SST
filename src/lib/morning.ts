@@ -16,10 +16,31 @@ const HOSTS = {
 
 function env() {
   const mode = process.env.MORNING_ENV === "production" ? "production" : "sandbox";
-  // Trim: a pasted key often carries a stray space or newline.
-  const id = process.env.MORNING_CLIENT_ID?.trim();
-  const secret = process.env.MORNING_CLIENT_SECRET?.trim();
+  const id = cleanKey(process.env.MORNING_CLIENT_ID);
+  const secret = cleanKey(process.env.MORNING_CLIENT_SECRET);
   return { mode, hosts: HOSTS[mode], id, secret } as const;
+}
+
+// A pasted key often carries a stray space/newline, or invisible
+// right-to-left marks when copied from a Hebrew page.
+export function cleanKey(v: string | undefined) {
+  return v?.replace(/[​-‏‪-‮⁦-⁩﻿]/g, "").trim();
+}
+
+// Tries a key pair against Morning's token endpoint. Returns the OAuth error
+// code, or "ok". Used by the owner's key-test page; nothing is stored.
+export async function testMorningKey(rawId: string, rawSecret: string): Promise<string> {
+  const id = cleanKey(rawId) ?? "";
+  const secret = cleanKey(rawSecret) ?? "";
+  const res = await fetch(env().hosts.token, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
+    cache: "no-store",
+  });
+  if (res.ok) return "ok";
+  const b = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
+  return `${res.status} ${b.error ?? ""} ${b.error_description ?? ""} (idLength=${id.length}, secretLength=${secret.length})`;
 }
 
 export function morningConfigured() {
