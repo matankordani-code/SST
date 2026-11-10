@@ -45,17 +45,32 @@ async function accessToken(): Promise<string> {
     body: JSON.stringify({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
     cache: "no-store",
   });
-  if (!res.ok) {
-    // OAuth error code only (e.g. invalid_client / unauthorized_client); never the secret.
-    const body = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
-    throw new Error(
-      `Morning auth failed (${res.status} ${body.error ?? ""}: ${body.error_description ?? ""}) ` +
-        `[mode=${mode}, idLength=${id.length}, idPrefix=${id.slice(0, 4)}, secretLength=${secret.length}]`,
-    );
+  if (res.ok) {
+    const data = (await res.json()) as { accessToken: string; expiresAt: number };
+    cached = { token: data.accessToken, expiresAt: data.expiresAt, mode };
+    return data.accessToken;
   }
-  const data = (await res.json()) as { accessToken: string; expiresAt: number };
-  cached = { token: data.accessToken, expiresAt: data.expiresAt, mode };
-  return data.accessToken;
+  // OAuth error code only (e.g. invalid_client); never the secret.
+  const body = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
+  const oauthError = `${res.status} ${body.error ?? ""}`;
+
+  // Fallback: the classic Green Invoice login (POST /account/token {id, secret}).
+  const legacy = await fetch(`${hosts.api}/account/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, secret }),
+    cache: "no-store",
+  });
+  if (legacy.ok) {
+    const data = (await legacy.json()) as { token: string; expires?: number };
+    cached = { token: data.token, expiresAt: data.expires ?? now + 3000, mode };
+    return data.token;
+  }
+  const legacyBody = (await legacy.json().catch(() => ({}))) as { errorCode?: number; errorMessage?: string };
+  throw new Error(
+    `Morning auth failed (oauth: ${oauthError}; legacy: ${legacy.status} ${legacyBody.errorCode ?? ""} ${legacyBody.errorMessage ?? ""}) ` +
+      `[mode=${mode}, idLength=${id.length}, idPrefix=${id.slice(0, 4)}, secretLength=${secret.length}]`,
+  );
 }
 
 export type PaymentFormInput = {
