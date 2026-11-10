@@ -65,6 +65,15 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
   },
 };
 
+// Tabs shown under the header, per role. Grows as screens are built.
+export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> = {
+  owner: [
+    { href: "/owner", label: "ראשי" },
+    { href: "/owner/clinic", label: "הקליניקה שלי" },
+  ],
+  therapist: [{ href: "/therapist", label: "מטופלים" }],
+};
+
 export function isRole(value: unknown): value is Role {
   return typeof value === "string" && (ROLES as readonly string[]).includes(value);
 }

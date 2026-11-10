@@ -34,10 +34,10 @@ export async function getProfile(): Promise<Profile> {
   };
 }
 
-// Guards a role screen: anyone with a different role is sent back to "/",
+// Guards a screen: anyone without one of the given roles is sent back to "/",
 // which routes them to their own screen.
-export async function requireRole(role: Role): Promise<Profile> {
+export async function requireRole(...roles: Role[]): Promise<Profile> {
   const profile = await getProfile();
-  if (profile.role !== role) redirect("/");
+  if (!profile.role || !roles.includes(profile.role)) redirect("/");
   return profile;
 }

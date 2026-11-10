@@ -1,15 +1,20 @@
+import Link from "next/link";
 import type { Profile } from "@/lib/auth";
-import { ROLE_INFO } from "@/lib/roles";
+import { ROLE_INFO, ROLE_NAV } from "@/lib/roles";
 
 export function AppShell({
   profile,
+  active,
   children,
 }: {
   profile: Profile;
+  // href of the current tab, to highlight it
+  active?: string;
   children: React.ReactNode;
 }) {
   const name = profile.full_name || profile.email || "";
   const roleLabel = profile.role ? ROLE_INFO[profile.role].label : "ללא תפקיד";
+  const tabs = profile.role ? (ROLE_NAV[profile.role] ?? []) : [];
 
   return (
     <div className="px-4 pt-6 pb-16">
@@ -32,8 +37,54 @@ export function AppShell({
             </form>
           </div>
         </header>
+
+        {tabs.length > 0 && (
+          <nav aria-label="ניווט" className="flex flex-wrap gap-2">
+            {tabs.map((t) => {
+              const isActive = t.href === active;
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={
+                    "flex min-h-11 items-center rounded-lg px-4 text-[15px] " +
+                    (isActive
+                      ? "bg-primary font-semibold text-white"
+                      : "border border-line bg-white text-ink hover:bg-sand")
+                  }
+                >
+                  {t.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         {children}
       </div>
     </div>
+  );
+}
+
+export function Card({
+  title,
+  children,
+  actions,
+}: {
+  title?: React.ReactNode;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+      {(title || actions) && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {title && <h2 className="text-lg font-bold">{title}</h2>}
+          {actions}
+        </div>
+      )}
+      {children}
+    </section>
   );
 }
