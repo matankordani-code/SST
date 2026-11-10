@@ -1,7 +1,8 @@
 import "server-only";
 
 // Morning (חשבונית ירוקה) API client. Server-side only: uses the secret key.
-// Env: MORNING_ENV ("sandbox" | "production"), MORNING_CLIENT_ID, MORNING_CLIENT_SECRET.
+// Env: MORNING_ENV ("sandbox" | "production"), MORNING_CLIENT_ID, MORNING_CLIENT_SECRET,
+// optional MORNING_PLUGIN_ID (Grow clearing terminal).
 
 const HOSTS = {
   sandbox: {
@@ -148,6 +149,7 @@ export type PaymentFormInput = {
 // invoice/receipt (type 320), emails it to the client, and POSTs notifyUrl.
 export async function createPaymentForm(input: PaymentFormInput): Promise<string> {
   const { hosts } = env();
+  const pluginId = cleanKey(process.env.MORNING_PLUGIN_ID);
   const token = await accessToken();
   const res = await fetch(`${hosts.api}/payments/form`, {
     method: "POST",
@@ -166,6 +168,9 @@ export async function createPaymentForm(input: PaymentFormInput): Promise<string
       notifyUrl: input.notifyUrl,
       custom: input.custom,
       group: input.group ?? 100,
+      // Grow (משולם) terminal id, given by Morning support once Grow approves
+      // the terminal. Optional: sent only when MORNING_PLUGIN_ID is set.
+      ...(pluginId ? { pluginId } : {}),
     }),
     cache: "no-store",
   });
