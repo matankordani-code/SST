@@ -1,18 +1,18 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { emailConfigured, reminderEmail, sendEmail, settlementEmail } from "@/lib/email";
 import { addDays, addMonths, dayKey, formatMonth, timeOf } from "@/lib/time";
 
-// Called every hour by Supabase (pg_cron + pg_net) with "Authorization: Bearer <CRON_SECRET>".
+// Called every hour by Supabase (pg_cron + pg_net).
 //   20:00–22:59 Israel: reminder for each of tomorrow's sessions (once per session).
 //   09:00–11:59 Israel: from the 4th, remind therapists who haven't approved last
 //   month; from the 6th, those who approved but haven't uploaded an invoice.
-// Every email is logged in email_log, so a repeated run never sends twice.
-export async function GET(request: NextRequest) {
+// Every email is logged in email_log, so a repeated run never sends twice. That is
+// why the call itself needs no password: it only sends what is due, once, and
+// returns counts only. CRON_SECRET (server-only) is what lets it read the database.
+export async function GET() {
   const secret = process.env.CRON_SECRET ?? "";
-  if (secret.length < 32 || request.headers.get("authorization") !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  if (secret.length < 32) return NextResponse.json({ skipped: "CRON_SECRET is not set" });
   if (!emailConfigured()) return NextResponse.json({ skipped: "RESEND_API_KEY is not set" });
 
   // No login here: the database functions check the same secret.
