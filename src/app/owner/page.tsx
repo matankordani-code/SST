@@ -6,6 +6,7 @@ import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { Th } from "@/components/my-clients";
 import { OwnerAlerts } from "@/components/owner-alerts";
+import { IncomeKpis } from "@/components/income-kpis";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { requestAccessAction, transferClientAction } from "@/app/clients/actions";
 
@@ -36,6 +37,7 @@ async function Content() {
 
   return (
     <AppShell profile={profile} active="/owner">
+      <IncomeKpis />
       <OwnerAlerts />
       <Card title="מעקב טיפולים">
         <p className="text-[13px] text-muted">
@@ -123,13 +125,6 @@ async function Content() {
             </table>
           </div>
         )}
-      </Card>
-
-      <Card title="בהמשך יופיעו כאן">
-        <ul className="list-disc ps-5 text-muted">
-          <li>הכנסות החודש ונקודת איזון</li>
-          <li>התחשבנות עם מטפלים</li>
-        </ul>
       </Card>
     </AppShell>
   );
