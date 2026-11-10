@@ -88,6 +88,21 @@ export function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
+// Months as "YYYY-MM".
+export const monthOf = (d: Date) => dayKey(d).slice(0, 7);
+export const isMonthKey = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}$/.test(v);
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1 + n, 1));
+  return t.toISOString().slice(0, 7);
+}
+export function formatMonth(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat("he-IL", { timeZone: "UTC", month: "long", year: "numeric" }).format(
+    new Date(Date.UTC(y, m - 1, 1)),
+  );
+}
+
 export function formatDate(key: string) {
   const [y, m, d] = key.split("-").map(Number);
   return `${d}.${m}.${y}`;
