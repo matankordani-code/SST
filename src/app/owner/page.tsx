@@ -1,6 +1,6 @@
 ﻿import { Suspense } from "react";
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -21,7 +21,7 @@ export default function OwnerPage() {
 type FileStatus = { client_id: string; shared_with_owner: boolean; owner_requested_at: string | null };
 
 async function Content() {
-  const profile = await requireRole("owner");
+  const profile = await requirePerm("clients", 2);
   const supabase = await createClient();
 
   const [{ data: clientsData }, { data: therapists }, { data: statuses }, { data: myId }] =
@@ -34,11 +34,14 @@ async function Content() {
 
   const clients = (clientsData ?? []) as unknown as ClientRow[];
   const statusById = new Map(((statuses ?? []) as FileStatus[]).map((s) => [s.client_id, s]));
+  const isOwner = profile.role === "owner";
+  const canTransfer = profile.perms.transfer === 2;
+  const therapistName = new Map((therapists ?? []).map((t) => [t.id, t.display_name]));
 
   return (
     <AppShell profile={profile} active="/owner">
-      <IncomeKpis />
-      <OwnerAlerts />
+      {profile.perms.income === 2 && <IncomeKpis />}
+      {isOwner && <OwnerAlerts />}
       <Card title="מעקב טיפולים">
         <p className="text-[13px] text-muted">
           אתה רואה נתוני מעקב לכל מטופל. התיק האישי נפתח רק אם המטפל אישר שיתוף.
@@ -71,6 +74,9 @@ async function Content() {
                     <tr key={c.id} className="border-b border-[#EFEAE0]">
                       <td className="px-2 py-3 font-semibold">{c.full_name}</td>
                       <td className="px-2 py-2">
+                        {!canTransfer ? (
+                          <span>{therapistName.get(c.therapist_id) ?? ""}</span>
+                        ) : (
                         <form
                           action={transferClientAction.bind(null, c.id)}
                           className="flex items-center gap-2"
@@ -94,6 +100,7 @@ async function Content() {
                             העבר
                           </button>
                         </form>
+                        )}
                       </td>
                       <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>
                       <td className="px-2 py-3">{PAYMENT_LABEL[c.payment_method]}</td>
@@ -105,6 +112,8 @@ async function Content() {
                           >
                             {own ? "פתיחה" : "פתיחה · משותף"}
                           </Link>
+                        ) : !isOwner ? (
+                          <span className="text-[13px] text-muted">נעול</span>
                         ) : st?.owner_requested_at ? (
                           <span className="text-[13px] text-muted">הבקשה נשלחה למטפל</span>
                         ) : (

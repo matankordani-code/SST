@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -29,7 +29,7 @@ type FileRow = {
 
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await requireRole("owner", "therapist", "surf_instructor");
+  const profile = await requirePerm("clients");
   const supabase = await createClient();
 
   const [{ data: clientData }, { data: file }, { data: myId }] = await Promise.all([
@@ -52,14 +52,14 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
     await supabase.from("access_log").insert({ client_id: id, action: "view_file" });
   }
 
-  const back = profile.role === "owner" ? (treating ? "/owner/clinic" : "/owner") : "/therapist";
+  const back = treating ? (profile.role === "owner" ? "/owner/clinic" : "/therapist") : profile.perms.clients === 2 ? "/owner" : "/therapist";
 
   return (
     <AppShell profile={profile} active={back}>
       <Card
         title={`תיק אישי · ${client.full_name}`}
         actions={
-          (treating || profile.role === "owner") && (
+          (treating || profile.perms.clients === 2) && (
             <Link
               href={`/clients/${id}/edit`}
               className="flex min-h-11 items-center rounded-lg border border-field bg-white px-4 text-sm hover:bg-sand"

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -15,7 +15,7 @@ export default function SettingsPage() {
 }
 
 async function Content() {
-  const profile = await requireRole("owner");
+  const profile = await requirePerm("staff", 2);
   const supabase = await createClient();
   const { data } = await supabase.from("app_settings").select("key, value").in("key", ["health_text", "parental_text"]);
   const get = (k: string) => {

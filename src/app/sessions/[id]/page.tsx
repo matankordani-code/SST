@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -29,7 +29,7 @@ type Summary = { did: string; mood: number | null; next_goal: string | null };
 
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await requireRole("owner", "therapist", "surf_instructor");
+  const profile = await requirePerm("calendar");
   const supabase = await createClient();
 
   const [{ data: sData }, { data: summary }, { data: myId }] = await Promise.all([

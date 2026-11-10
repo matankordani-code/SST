@@ -1,7 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { REGISTER_MESSAGE } from "@/lib/club";
 
@@ -10,7 +10,7 @@ export type FormState = { error?: string; ok?: string } | undefined;
 const text = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
 export async function addTrainingAction(_: FormState, fd: FormData): Promise<FormState> {
-  await requireRole("owner", "club_manager");
+  await requirePerm("club", 2);
   const weekday = Number(text(fd, "weekday"));
   const capacity = Number(text(fd, "capacity"));
   const time = text(fd, "start_time");
@@ -33,14 +33,14 @@ export async function addTrainingAction(_: FormState, fd: FormData): Promise<For
 }
 
 export async function toggleTrainingAction(id: string, active: boolean) {
-  await requireRole("owner", "club_manager");
+  await requirePerm("club", 2);
   const supabase = await createClient();
   await supabase.from("trainings").update({ is_active: active }).eq("id", id);
   refresh();
 }
 
 export async function addMemberAction(_: FormState, fd: FormData): Promise<FormState> {
-  await requireRole("owner", "club_manager");
+  await requirePerm("club", 2);
   const name = text(fd, "full_name");
   const email = text(fd, "email").toLowerCase();
   if (!name) return { error: "חסר שם." };
@@ -71,7 +71,7 @@ export async function addMemberAction(_: FormState, fd: FormData): Promise<FormS
 }
 
 export async function toggleMemberAction(id: string, active: boolean) {
-  await requireRole("owner", "club_manager");
+  await requirePerm("club", 2);
   const supabase = await createClient();
   await supabase.from("members").update({ is_active: active }).eq("id", id);
   refresh();

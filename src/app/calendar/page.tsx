@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -22,8 +22,8 @@ async function Content({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const profile = await requireRole("owner", "therapist", "surf_instructor");
-  const isOwner = profile.role === "owner";
+  const profile = await requirePerm("calendar");
+  const isOwner = profile.perms.calendar === 2; // sees every therapist
   const supabase = await createClient();
 
   const today = dayKey(new Date());

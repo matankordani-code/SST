@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -20,7 +20,7 @@ async function Content({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const profile = await requireRole("owner", "therapist", "surf_instructor");
+  const profile = await requirePerm("calendar");
   const supabase = await createClient();
 
   // RLS: owner gets every client, a therapist only their own.
@@ -35,7 +35,7 @@ async function Content({
     therapist: { display_name: string } | null;
   }[]).map((c) => ({
     id: c.id,
-    label: profile.role === "owner" && c.therapist ? `${c.full_name} · ${c.therapist.display_name}` : c.full_name,
+    label: profile.perms.calendar === 2 && c.therapist ? `${c.full_name} · ${c.therapist.display_name}` : c.full_name,
   }));
 
   return (

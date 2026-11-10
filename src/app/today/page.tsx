@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -20,7 +20,7 @@ export default function TodayPage() {
 type Prev = { client_id: string; summary: { did: string; next_goal: string | null } | null };
 
 async function Content() {
-  const profile = await requireRole("owner", "therapist", "surf_instructor");
+  const profile = await requirePerm("calendar");
   const supabase = await createClient();
   const { data: myId } = await supabase.rpc("my_therapist_id");
   const today = dayKey(new Date());

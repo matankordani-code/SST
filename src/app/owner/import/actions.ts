@@ -1,6 +1,6 @@
 "use server";
 
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CARD_PRICE, isPaymentMethod } from "@/lib/clients";
 import type { ImportRow } from "@/lib/import-parse";
@@ -10,7 +10,7 @@ export type ImportResult = { created: number; skipped: string[]; failed: string[
 
 // Creates clients (+ payer + current punch card) from the previewed rows.
 export async function importClientsAction(therapistId: string, rows: ImportRow[]): Promise<ImportResult> {
-  await requireRole("owner");
+  await requirePerm("staff", 2);
   const supabase = await createClient();
 
   const { data: existing } = await supabase.from("clients").select("full_name").eq("therapist_id", therapistId);

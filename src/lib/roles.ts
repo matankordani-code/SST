@@ -65,33 +65,9 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
   },
 };
 
-// Tabs shown under the header, per role. Grows as screens are built.
+// Tabs for client-facing roles. Staff tabs come from permissions (src/lib/nav.ts).
 export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> = {
-  owner: [
-    { href: "/owner", label: "ראשי" },
-    { href: "/today", label: "היום שלי" },
-    { href: "/calendar", label: "יומן" },
-    { href: "/owner/clinic", label: "הקליניקה שלי" },
-    { href: "/club", label: "מועדון" },
-    { href: "/owner/income", label: "הכנסות" },
-    { href: "/owner/settlements", label: "התחשבנות" },
-    { href: "/owner/therapists", label: "מטפלים" },
-    { href: "/owner/settings", label: "הגדרות" },
-  ],
-  therapist: [
-    { href: "/today", label: "היום שלי" },
-    { href: "/calendar", label: "יומן" },
-    { href: "/therapist", label: "מטופלים" },
-    { href: "/month", label: "סיכום חודשי" },
-  ],
-  club_manager: [{ href: "/club", label: "מועדון" }],
   member: [{ href: "/member", label: "האימונים שלי" }],
-  surf_instructor: [
-    { href: "/today", label: "היום שלי" },
-    { href: "/calendar", label: "יומן שיעורים" },
-    { href: "/therapist", label: "תלמידים" },
-    { href: "/month", label: "סיכום חודשי" },
-  ],
 };
 
 export function isRole(value: unknown): value is Role {

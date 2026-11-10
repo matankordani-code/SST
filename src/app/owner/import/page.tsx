@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { requireRole } from "@/lib/auth";
+import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -14,7 +14,7 @@ export default function ImportPage() {
 }
 
 async function Content() {
-  const profile = await requireRole("owner");
+  const profile = await requirePerm("staff", 2);
   const supabase = await createClient();
   const [{ data: therapists }, { data: myId }] = await Promise.all([
     supabase.from("therapists").select("id, display_name").eq("is_active", true).order("display_name"),

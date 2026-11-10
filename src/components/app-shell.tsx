@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Profile } from "@/lib/auth";
-import { ROLE_INFO, ROLE_NAV } from "@/lib/roles";
+import { ROLE_INFO } from "@/lib/roles";
+import { navFor } from "@/lib/nav";
 
 export function AppShell({
   profile,
@@ -14,7 +15,7 @@ export function AppShell({
 }) {
   const name = profile.full_name || profile.email || "";
   const roleLabel = profile.role ? ROLE_INFO[profile.role].label : "ללא תפקיד";
-  const tabs = profile.role ? (ROLE_NAV[profile.role] ?? []) : [];
+  const tabs = navFor(profile);
 
   return (
     <div className="px-4 pt-6 pb-16">
