@@ -52,7 +52,44 @@ async function accessToken(): Promise<string> {
   }
   // OAuth error code only (e.g. invalid_client); never the secret.
   const body = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
-  const oauthError = `${res.status} ${body.error ?? ""}`;
+  let oauthError = `json ${res.status} ${body.error ?? ""}`;
+
+  // Other standard OAuth client-credentials encodings, in case the server expects them.
+  const variants: { name: string; init: RequestInit }[] = [
+    {
+      name: "basic",
+      init: {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          Authorization: `Basic ${Buffer.from(`${id}:${secret}`).toString("base64")}`,
+        },
+        body: new URLSearchParams({ grant_type: "client_credentials" }).toString(),
+      },
+    },
+    {
+      name: "form",
+      init: {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "client_credentials", client_id: id, client_secret: secret }).toString(),
+      },
+    },
+  ];
+  for (const v of variants) {
+    const r = await fetch(hosts.token, { ...v.init, cache: "no-store" });
+    if (r.ok) {
+      const data = (await r.json()) as { accessToken?: string; access_token?: string; expiresAt?: number; expires_in?: number };
+      const token = data.accessToken ?? data.access_token;
+      if (token) {
+        cached = { token, expiresAt: data.expiresAt ?? now + (data.expires_in ?? 3000), mode };
+        console.log(`Morning auth ok via ${v.name}`);
+        return token;
+      }
+    }
+    const b = (await r.json().catch(() => ({}))) as { error?: string };
+    oauthError += `; ${v.name} ${r.status} ${b.error ?? ""}`;
+  }
 
   // Fallback: the classic Green Invoice login (POST /account/token {id, secret}).
   const legacy = await fetch(`${hosts.api}/account/token`, {
