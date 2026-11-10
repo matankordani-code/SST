@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // /api/morning: payment notifications from Morning; /pay: pages the payer
 // lands on after paying. Neither has a logged-in user.
-const PUBLIC_PATHS = ["/login", "/auth", "/api/morning", "/pay"];
+const PUBLIC_PATHS = ["/login", "/auth", "/api/morning", "/pay", "/sign"];
 
 // Refreshes the Supabase session cookie on every request and sends
 // signed-out visitors to /login. Role checks happen on each page (requireRole)

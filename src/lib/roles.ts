@@ -75,6 +75,7 @@ export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> 
     { href: "/owner/income", label: "הכנסות" },
     { href: "/owner/settlements", label: "התחשבנות" },
     { href: "/owner/therapists", label: "מטפלים" },
+    { href: "/owner/settings", label: "הגדרות" },
   ],
   therapist: [
     { href: "/today", label: "היום שלי" },
