@@ -92,11 +92,11 @@ export default function LoginPage() {
           ) : (
             <>
               <p className="text-sm text-muted">
-                שלחנו קוד ל-<bdi dir="ltr">{email}</bdi>. הזן אותו כאן, או לחץ על
-                הקישור שבמייל.
+                שלחנו מייל ל-<bdi dir="ltr">{email}</bdi>. לחץ על הקישור שבמייל
+                כדי להיכנס. פתח אותו באותו מכשיר ובאותו דפדפן.
               </p>
               <label className="flex flex-col gap-1 text-sm text-muted">
-                קוד כניסה
+                יש במייל קוד? אפשר להזין אותו כאן
                 <input
                   type="text"
                   inputMode="numeric"
