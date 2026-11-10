@@ -4,7 +4,7 @@ import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/li
 import { Card } from "@/components/app-shell";
 
 // The signed-in therapist's own clients (also the owner's "הקליניקה שלי").
-export async function MyClients() {
+export async function MyClients({ showImport = false }: { showImport?: boolean } = {}) {
   const supabase = await createClient();
   const { data: myId } = await supabase.rpc("my_therapist_id");
 
@@ -30,12 +30,22 @@ export async function MyClients() {
     <Card
       title={`המטופלים שלי · ${clients.length}`}
       actions={
-        <Link
-          href="/clients/new"
-          className="flex min-h-11 items-center rounded-lg bg-primary px-4 font-semibold text-white hover:bg-primary-dark"
-        >
-          + מטופל חדש
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {showImport && (
+            <Link
+              href="/owner/import"
+              className="flex min-h-11 items-center rounded-lg border border-primary bg-white px-4 text-primary"
+            >
+              ייבוא מהאקסל
+            </Link>
+          )}
+          <Link
+            href="/clients/new"
+            className="flex min-h-11 items-center rounded-lg bg-primary px-4 font-semibold text-white hover:bg-primary-dark"
+          >
+            + מטופל חדש
+          </Link>
+        </div>
       }
     >
       {clients.length === 0 ? (

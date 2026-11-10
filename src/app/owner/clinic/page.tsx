@@ -16,7 +16,7 @@ async function Content() {
   const profile = await requireRole("owner");
   return (
     <AppShell profile={profile} active="/owner/clinic">
-      <MyClients />
+      <MyClients showImport />
     </AppShell>
   );
 }
