@@ -10,6 +10,7 @@ const heebo = Heebo({
 export const metadata: Metadata = {
   title: "SST™ · מערכת המרכז",
   description: "מערכת ניהול המרכז",
+  appleWebApp: { capable: true, title: "SST", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

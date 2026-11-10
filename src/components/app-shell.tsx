@@ -39,7 +39,7 @@ export function AppShell({
         </header>
 
         {tabs.length > 0 && (
-          <nav aria-label="ניווט" className="flex flex-wrap gap-2">
+          <nav aria-label="ניווט" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
             {tabs.map((t) => {
               const isActive = t.href === active;
               return (
@@ -48,7 +48,7 @@ export function AppShell({
                   href={t.href}
                   aria-current={isActive ? "page" : undefined}
                   className={
-                    "flex min-h-11 items-center rounded-lg px-4 text-[15px] " +
+                    "flex min-h-11 shrink-0 items-center whitespace-nowrap rounded-lg px-4 text-[15px] " +
                     (isActive
                       ? "bg-primary font-semibold text-white"
                       : "border border-line bg-white text-ink hover:bg-sand")
