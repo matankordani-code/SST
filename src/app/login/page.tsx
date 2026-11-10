@@ -74,7 +74,7 @@ export default function LoginPage() {
           {step === "email" ? (
             <>
               <p className="text-sm text-muted">
-                הזן את כתובת המייל שלך, ונשלח אליך קוד כניסה.
+                הזן את כתובת המייל שלך, ונשלח אליך קישור כניסה.
               </p>
               <label className="flex flex-col gap-1 text-sm text-muted">
                 כתובת מייל
@@ -123,7 +123,7 @@ export default function LoginPage() {
             disabled={busy}
             className="min-h-12 rounded-[10px] bg-primary text-base font-semibold text-white hover:bg-primary-dark disabled:opacity-60"
           >
-            {busy ? "רגע…" : step === "email" ? "שלח קוד" : "כניסה"}
+            {busy ? "רגע…" : step === "email" ? "שלח קישור כניסה" : "כניסה עם הקוד"}
           </button>
 
           {step === "code" && (
@@ -136,7 +136,7 @@ export default function LoginPage() {
               }}
               className="text-sm text-primary underline"
             >
-              החלפת מייל או שליחת קוד חדש
+              החלפת מייל או שליחה מחדש
             </button>
           )}
         </form>
