@@ -8,9 +8,11 @@ export const VIEW_COOKIE = "sst_view";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
+export type ViewKind = "therapist" | "member" | "client";
+
 export type ViewAs = {
-  kind: "therapist" | "member";
-  // therapists.id or members.id
+  kind: ViewKind;
+  // therapists.id, members.id or clients.id
   id: string;
   name: string;
   role: Role;
@@ -22,13 +24,16 @@ export const NO_ID = "00000000-0000-0000-0000-000000000000";
 
 const UUID =/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-// Cookie value: "t:<therapist id>" or "m:<member id>".
-export function parseViewValue(v: string | undefined | null): { kind: "therapist" | "member"; id: string } | null {
+// Cookie value: "t:<therapist id>", "m:<member id>" or "c:<client id>".
+export const VIEW_PREFIX: Record<ViewKind, string> = { therapist: "t", member: "m", client: "c" };
+
+export function parseViewValue(v: string | undefined | null): { kind: ViewKind; id: string } | null {
   if (!v) return null;
   const [k, id] = v.split(":");
   if (!UUID.test(id ?? "")) return null;
   if (k === "t") return { kind: "therapist", id };
   if (k === "m") return { kind: "member", id };
+  if (k === "c") return { kind: "client", id };
   return null;
 }
 
@@ -64,6 +69,12 @@ export async function resolveView(supabase: Supabase, value: string | undefined)
     if (!data || data.profile?.role === "owner") return null;
     const role: Role = data.split === "per_lesson" ? "surf_instructor" : "therapist";
     return { kind: "therapist", id: data.id, name: data.display_name, role, perms: await permsFor(supabase, role, data.profile_id) };
+  }
+
+  if (v.kind === "client") {
+    const { data } = await supabase.from("clients").select("id, full_name").eq("id", v.id).maybeSingle<{ id: string; full_name: string }>();
+    if (!data) return null;
+    return { kind: "client", id: data.id, name: data.full_name, role: "client", perms: defaultsFor("client") };
   }
 
   const { data } = await supabase

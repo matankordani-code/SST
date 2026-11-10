@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
+import { after } from "next/server";
+import { notifyCancelled, notifyMoved, sessionContact } from "@/lib/session-mail";
 import { createClient } from "@/lib/supabase/server";
 import { isSessionStatus, type SessionStatus } from "@/lib/sessions";
 import { addDays, israelToUtc, isDayKey, weekStart } from "@/lib/time";
@@ -49,7 +51,19 @@ export async function createSessionAction(_: FormState, fd: FormData): Promise<F
 export async function reportAction(sessionId: string, status: SessionStatus) {
   if (!isSessionStatus(status)) return;
   const supabase = await createClient();
-  await supabase.from("sessions").update({ status }).eq("id", sessionId);
+  const cancelling = status === "cancelled_ontime" || status === "cancelled_late";
+  // A planned session that is now cancelled: tell the payer (after the response is sent).
+  const { data: changed } = await supabase
+    .from("sessions")
+    .update({ status })
+    .eq("id", sessionId)
+    .neq("status", status)
+    .select("id")
+    .maybeSingle();
+  if (changed && cancelling) {
+    const contact = await sessionContact(supabase, sessionId);
+    if (contact && new Date(contact.startsAt) > new Date()) after(() => notifyCancelled(contact));
+  }
   refresh();
 }
 
@@ -77,11 +91,19 @@ export async function moveSessionAction(sessionId: string, fd: FormData) {
   const time = text(fd, "time");
   if (!isDayKey(date) || !TIME_RE.test(time)) return;
   const supabase = await createClient();
-  await supabase
+  const startsAt = israelToUtc(date, time).toISOString();
+  const { data: moved } = await supabase
     .from("sessions")
-    .update({ starts_at: israelToUtc(date, time).toISOString() })
+    .update({ starts_at: startsAt })
     .eq("id", sessionId)
-    .eq("status", "planned");
+    .eq("status", "planned")
+    .neq("starts_at", startsAt)
+    .select("id")
+    .maybeSingle();
+  if (moved) {
+    const contact = await sessionContact(supabase, sessionId);
+    after(() => notifyMoved(contact));
+  }
   refresh();
 }
 
@@ -92,16 +114,22 @@ export async function deleteSessionAction(
   scope: "one" | "series",
 ) {
   const supabase = await createClient();
+  // Read who to tell before the row is gone.
+  const contact = await sessionContact(supabase, sessionId);
+  let deleted: { id: string }[] | null;
   if (scope === "series" && seriesId) {
-    await supabase
+    ({ data: deleted } = await supabase
       .from("sessions")
       .delete()
       .eq("series_id", seriesId)
       .eq("status", "planned")
-      .gte("starts_at", startsAt);
+      .gte("starts_at", startsAt)
+      .select("id"));
   } else {
-    await supabase.from("sessions").delete().eq("id", sessionId).eq("status", "planned");
+    ({ data: deleted } = await supabase.from("sessions").delete().eq("id", sessionId).eq("status", "planned").select("id"));
   }
+  const count = deleted?.length ?? 0;
+  if (count > 0 && contact && new Date(contact.startsAt) > new Date()) after(() => notifyCancelled(contact, count));
   redirect("/calendar");
 }
 

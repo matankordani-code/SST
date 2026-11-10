@@ -68,6 +68,7 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
 // Tabs for client-facing roles. Staff tabs come from permissions (src/lib/nav.ts).
 export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> = {
   member: [{ href: "/member", label: "האימונים שלי" }],
+  client: [{ href: "/client", label: "האזור האישי" }],
 };
 
 export function isRole(value: unknown): value is Role {

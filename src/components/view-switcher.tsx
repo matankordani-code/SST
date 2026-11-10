@@ -2,18 +2,20 @@ import Link from "next/link";
 import type { Profile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_INFO } from "@/lib/roles";
+import { VIEW_PREFIX } from "@/lib/view";
 
 // Owner only: pick whose eyes to see the system through. A plain GET form to
 // /view, so it works with no JavaScript and while server actions are blocked.
 export async function ViewSwitcher({ profile }: { profile: Profile }) {
   const supabase = await createClient();
-  const [{ data: therapists }, { data: members }] = await Promise.all([
+  const [{ data: therapists }, { data: members }, { data: clients }] = await Promise.all([
     supabase
       .from("therapists")
       .select("id, display_name, split, profile:profiles(role)")
       .eq("is_active", true)
       .order("display_name"),
     supabase.from("members").select("id, full_name").eq("is_active", true).order("full_name"),
+    supabase.from("clients").select("id, full_name").eq("is_active", true).order("full_name"),
   ]);
 
   type T = { id: string; display_name: string; split: string; profile: { role: string | null } | null };
@@ -21,8 +23,9 @@ export async function ViewSwitcher({ profile }: { profile: Profile }) {
   const therapistList = staff.filter((t) => t.split !== "per_lesson");
   const instructorList = staff.filter((t) => t.split === "per_lesson");
   const memberList = (members ?? []) as { id: string; full_name: string }[];
+  const clientList = (clients ?? []) as { id: string; full_name: string }[];
 
-  const current = profile.viewAs ? `${profile.viewAs.kind === "therapist" ? "t" : "m"}:${profile.viewAs.id}` : "off";
+  const current = profile.viewAs ? `${VIEW_PREFIX[profile.viewAs.kind]}:${profile.viewAs.id}` : "off";
 
   return (
     <form action="/view" method="get" className="flex flex-wrap items-center gap-2">
@@ -50,6 +53,15 @@ export async function ViewSwitcher({ profile }: { profile: Profile }) {
             {instructorList.map((t) => (
               <option key={t.id} value={`t:${t.id}`}>
                 {t.display_name}
+              </option>
+            ))}
+          </optgroup>
+        )}
+        {clientList.length > 0 && (
+          <optgroup label="מטופלים / הורים">
+            {clientList.map((c) => (
+              <option key={c.id} value={`c:${c.id}`}>
+                {c.full_name}
               </option>
             ))}
           </optgroup>

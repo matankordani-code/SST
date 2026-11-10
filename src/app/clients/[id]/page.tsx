@@ -12,6 +12,7 @@ import { setShareAction, updateFileAction } from "@/app/clients/actions";
 import { ClientCards, ClientSessions } from "@/components/client-extras";
 import { ClientPayments } from "@/components/client-payments";
 import { DeclarationsCard } from "@/components/declarations-card";
+import { PortalInvite } from "@/components/portal-invite";
 
 export default function ClientPage({ params }: PageProps<"/clients/[id]">) {
   return (
@@ -92,6 +93,9 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
 
       {profile.role !== "surf_instructor" && <DeclarationsCard clientId={id} hasPayer={!!client.payer} />}
       <ClientPayments clientId={id} rate={client.rate} />
+      <Card title="אזור אישי למשלם">
+        <PortalInvite clientId={id} />
+      </Card>
       <ClientCards clientId={id} method={client.payment_method} />
       <ClientSessions clientId={id} />
 

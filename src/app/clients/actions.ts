@@ -127,3 +127,14 @@ export async function transferClientAction(clientId: string, fd: FormData) {
   await supabase.from("clients").update({ therapist_id: therapistId }).eq("id", clientId);
   refresh();
 }
+
+export type InviteState = { error?: string; email?: string } | undefined;
+
+// Opens the personal area for this client's payer (or the client).
+export async function inviteToPortalAction(clientId: string): Promise<InviteState> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("invite_to_portal", { p_client: clientId });
+  if (error) return { error: "ההזמנה נכשלה." };
+  if (!data) return { error: "אין מייל למשלם או למטופל. הוסף מייל בעריכת הפרטים." };
+  return { email: data as string };
+}
