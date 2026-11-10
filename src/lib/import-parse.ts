@@ -21,13 +21,13 @@ function findCol(header: string[], ...keys: string[]) {
   return header.findIndex((h) => keys.some((k) => h.includes(k)));
 }
 
-// "אלון (אורנה)" → name + payer. "צביקי \ אמנון" → name + payer too.
+// "אלון (אורנה)" → client "אלון", payer "אורנה".
+// Without parentheses the whole cell is the client, e.g. a couple
+// "צביקי \ אמנון" → one client "צביקי ואמנון", paying for themselves.
 export function splitName(v: string): { name: string; payer: string } {
   const m = v.match(/^(.*?)\s*\((.*)\)\s*$/);
   if (m) return { name: m[1].trim(), payer: m[2].trim() };
-  const b = v.split(/\s*\\\s*/);
-  if (b.length === 2) return { name: b[0].trim(), payer: b[1].trim() };
-  return { name: v.trim(), payer: "" };
+  return { name: v.replace(/\s*[\\/]\s*/g, " ו").trim(), payer: "" };
 }
 
 // "כרטיסייה 6-10 נכון ל3.11" → card10, 6 used. Empty → single.
