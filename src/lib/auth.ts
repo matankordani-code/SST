@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isRole, type Role } from "@/lib/roles";
 
@@ -11,6 +12,8 @@ export type Profile = {
 
 // Returns the signed-in user's profile, or sends them to the login page.
 export async function getProfile(): Promise<Profile> {
+  // Mark as request-time before the Supabase client reads the clock.
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },
