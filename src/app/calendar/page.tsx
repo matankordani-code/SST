@@ -77,6 +77,12 @@ async function Content({
           <Link href={qs(addDays(week, 7))} className={navBtn}>
             שבוע הבא ←
           </Link>
+          <Link
+            href={`/calendar/month?m=${week.slice(0, 7)}${isOwner && filter && filter !== "all" ? `&t=${filter}` : ""}`}
+            className={navBtn}
+          >
+            תצוגה חודשית
+          </Link>
           {therapists && (
             <form method="get" action="/calendar" className="flex items-center gap-2 ms-auto">
               <input type="hidden" name="week" value={week} />
