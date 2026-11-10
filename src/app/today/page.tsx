@@ -20,7 +20,7 @@ export default function TodayPage() {
 type Prev = { client_id: string; summary: { did: string; next_goal: string | null } | null };
 
 async function Content() {
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
   const { data: myId } = await supabase.rpc("my_therapist_id");
   const today = dayKey(new Date());

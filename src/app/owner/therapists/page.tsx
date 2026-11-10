@@ -22,6 +22,7 @@ type Row = {
   business_status: BusinessStatus;
   split: Split;
   is_active: boolean;
+  per_lesson_pay: number | null;
   profile: { email: string | null } | null;
 };
 
@@ -31,7 +32,7 @@ async function Content() {
   const [{ data }, { data: invites }] = await Promise.all([
     supabase
       .from("therapists")
-      .select("id, display_name, business_status, split, is_active, profile:profiles(email)")
+      .select("id, display_name, business_status, split, is_active, per_lesson_pay, profile:profiles(email)")
       .order("display_name"),
     supabase.from("invites").select("email, therapist_id"),
   ]);
@@ -86,6 +87,11 @@ async function Content() {
                         ))}
                       </select>
                     </Field>
+                    {t.split === "per_lesson" && (
+                      <Field label="לשיעור (₪)">
+                        <input name="per_lesson_pay" type="number" min={0} defaultValue={t.per_lesson_pay ?? 100} className={inputClass} />
+                      </Field>
+                    )}
                     <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
                       <input type="checkbox" name="is_active" defaultChecked={t.is_active} className="size-5 accent-primary" />
                       פעיל

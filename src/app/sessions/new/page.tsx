@@ -20,7 +20,7 @@ async function Content({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
 
   // RLS: owner gets every client, a therapist only their own.

@@ -17,7 +17,7 @@ export default function EditClientPage({ params }: PageProps<"/clients/[id]/edit
 
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
   const { data } = await supabase.from("clients").select(CLIENT_SELECT).eq("id", id).maybeSingle();
   if (!data) notFound();

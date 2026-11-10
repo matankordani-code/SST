@@ -50,7 +50,7 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
   },
   surf_instructor: {
     label: "מדריך גלישה",
-    path: "/instructor",
+    path: "/today",
     coming: ["יומן שיעורי גלישה ודיווח", "סיכום חודשי והעלאת חשבונית"],
   },
   client: {
@@ -80,6 +80,12 @@ export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> 
     { href: "/today", label: "היום שלי" },
     { href: "/calendar", label: "יומן" },
     { href: "/therapist", label: "מטופלים" },
+    { href: "/month", label: "סיכום חודשי" },
+  ],
+  surf_instructor: [
+    { href: "/today", label: "היום שלי" },
+    { href: "/calendar", label: "יומן שיעורים" },
+    { href: "/therapist", label: "תלמידים" },
     { href: "/month", label: "סיכום חודשי" },
   ],
 };

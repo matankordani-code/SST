@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const { data } = await supabase
     .from("sessions")
-    .select("starts_at, status, price, client:clients(full_name, payment_method), therapist:therapists(display_name, split)")
+    .select("starts_at, status, price, client:clients(full_name, payment_method), therapist:therapists(display_name, split, per_lesson_pay)")
     .in("status", ["held", "cancelled_late"])
     .gte("starts_at", israelToUtc(from, "00:00").toISOString())
     .lt("starts_at", israelToUtc(to, "00:00").toISOString())
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     status: SessionStatus;
     price: number;
     client: { full_name: string; payment_method: PaymentMethod } | null;
-    therapist: { display_name: string; split: string } | null;
+    therapist: { display_name: string; split: string; per_lesson_pay: number | null } | null;
   };
   const rows = (data ?? []) as unknown as Row[];
 
@@ -40,7 +40,11 @@ export async function GET(request: NextRequest) {
   };
   let billed = 0, staff = 0;
   const lines = rows.map((r) => {
-    const toStaff = r.status === "held" && r.therapist?.split !== "full" ? Math.min(260, r.price) : 0;
+    const split = r.therapist?.split;
+    const toStaff =
+      r.status !== "held" || split === "full"
+        ? 0
+        : Math.min(split === "per_lesson" ? (r.therapist?.per_lesson_pay ?? 100) : 260, r.price);
     billed += r.price;
     staff += toStaff;
     const d = new Date(r.starts_at);

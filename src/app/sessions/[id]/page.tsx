@@ -29,7 +29,7 @@ type Summary = { did: string; mood: number | null; next_goal: string | null };
 
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
 
   const [{ data: sData }, { data: summary }, { data: myId }] = await Promise.all([
@@ -116,7 +116,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         </Card>
       )}
 
-      {treating ? (
+      {treating && profile.role !== "surf_instructor" ? (
         <Card title="סיכום מפגש">
           <form action={saveSummaryAction.bind(null, s.id)} className="flex flex-col gap-3">
             <Field label="מה עשינו *">

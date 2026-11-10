@@ -1,4 +1,4 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import { requireRole } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
@@ -13,7 +13,7 @@ export default function TherapistPage() {
 }
 
 async function Content() {
-  const profile = await requireRole("therapist");
+  const profile = await requireRole("therapist", "surf_instructor");
   return (
     <AppShell profile={profile} active="/therapist">
       <MyClients />

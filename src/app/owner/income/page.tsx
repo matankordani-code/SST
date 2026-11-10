@@ -81,6 +81,7 @@ async function Content() {
                 <Th>סה״כ חיובים</Th>
                 <Th>למטפלים</Th>
                 <Th>למרכז</Th>
+                <Th>מזה גלישה</Th>
                 <Th>ייצוא</Th>
               </tr>
             </thead>
@@ -93,6 +94,7 @@ async function Content() {
                   <td className="px-2 py-2.5 tabular-nums">{formatShekel(m.billed)}</td>
                   <td className="px-2 py-2.5 tabular-nums">{formatShekel(m.to_staff)}</td>
                   <td className="px-2 py-2.5 font-semibold tabular-nums">{formatShekel(m.to_center)}</td>
+                  <td className="px-2 py-2.5 tabular-nums text-muted">{m.surf_center ? formatShekel(m.surf_center) : "—"}</td>
                   <td className="px-2 py-2.5">
                     <a href={`/api/income?m=${m.month.slice(0, 7)}`} className="text-primary underline">
                       אקסל

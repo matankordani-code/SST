@@ -5,6 +5,8 @@ export type MonthIncome = {
   to_center: number;
   held: number;
   late: number;
+  surf_billed: number;
+  surf_center: number;
 };
 
 // Fixed monthly costs set by the owner (break-even line).

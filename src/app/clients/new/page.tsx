@@ -14,7 +14,7 @@ export default function NewClientPage() {
 }
 
 async function Content() {
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
   const isOwner = profile.role === "owner";
 
@@ -31,6 +31,8 @@ async function Content() {
         therapists={therapists ?? null}
         defaultTherapistId={myId ?? undefined}
         cancelHref={isOwner ? "/owner/clinic" : "/therapist"}
+        defaultRate={profile.role === "surf_instructor" ? 280 : undefined}
+        instructor={profile.role === "surf_instructor"}
       />
     </AppShell>
   );

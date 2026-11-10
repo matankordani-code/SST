@@ -10,10 +10,14 @@ export function NewClientForm({
   therapists,
   defaultTherapistId,
   cancelHref,
+  defaultRate = DEFAULT_RATE,
+  instructor = false,
 }: {
   therapists: { id: string; display_name: string }[] | null;
   defaultTherapistId?: string;
   cancelHref: string;
+  defaultRate?: number;
+  instructor?: boolean;
 }) {
   const [state, action, pending] = useActionState(createClientAction, undefined);
   const [payerOther, setPayerOther] = useState(false);
@@ -23,7 +27,7 @@ export function NewClientForm({
       action={action}
       className="flex flex-col gap-4 rounded-xl border-2 border-primary bg-white p-5"
     >
-      <h2 className="text-xl font-bold">מטופל חדש</h2>
+      <h2 className="text-xl font-bold">{instructor ? "תלמיד חדש" : "מטופל חדש"}</h2>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
         <Field label="שם מלא *">
@@ -55,7 +59,7 @@ export function NewClientForm({
             name="rate"
             type="number"
             min={0}
-            defaultValue={DEFAULT_RATE}
+            defaultValue={defaultRate}
             className={inputClass}
           />
         </Field>
@@ -113,15 +117,19 @@ export function NewClientForm({
         )}
       </fieldset>
 
-      <Field label="מטרת הטיפול">
-        <input name="goal" className={inputClass} />
-      </Field>
-      <Field label="תקציר ראשוני">
-        <textarea name="intro" rows={4} className={inputClass + " py-2.5"} />
-      </Field>
-      <p className="text-[13px] text-muted">
-        המטרה והתקציר נשמרים בתיק האישי. רק המטפל רואה אותם, אלא אם הוא משתף את התיק.
-      </p>
+      {!instructor && (
+        <>
+          <Field label="מטרת הטיפול">
+            <input name="goal" className={inputClass} />
+          </Field>
+          <Field label="תקציר ראשוני">
+            <textarea name="intro" rows={4} className={inputClass + " py-2.5"} />
+          </Field>
+          <p className="text-[13px] text-muted">
+            המטרה והתקציר נשמרים בתיק האישי. רק המטפל רואה אותם, אלא אם הוא משתף את התיק.
+          </p>
+        </>
+      )}
 
       {state?.error && (
         <p role="alert" className="rounded-lg bg-alert-bg px-3 py-2 text-sm text-alert-ink">

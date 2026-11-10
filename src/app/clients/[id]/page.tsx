@@ -28,7 +28,7 @@ type FileRow = {
 
 async function Content({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const supabase = await createClient();
 
   const [{ data: clientData }, { data: file }, { data: myId }] = await Promise.all([
@@ -92,7 +92,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
       <ClientCards clientId={id} method={client.payment_method} />
       <ClientSessions clientId={id} />
 
-      {!file ? (
+      {profile.role === "surf_instructor" ? null : !file ? (
         <Card title="תוכן טיפולי">
           <p className="text-muted">
             התיק האישי נעול. הוא ייפתח רק אם המטפל יאשר שיתוף. אפשר לבקש גישה ממסך

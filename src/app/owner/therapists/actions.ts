@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 export type FormState = { error?: string; ok?: string } | undefined;
 
 const STATUSES = ["exempt", "licensed", "company", "nonprofit"] as const;
-const SPLITS = ["split_260_90", "full"] as const;
+const SPLITS = ["split_260_90", "full", "per_lesson"] as const;
 
 function text(fd: FormData, key: string) {
   const v = fd.get(key);
@@ -23,13 +23,17 @@ export async function addTherapistAction(_: FormState, fd: FormData): Promise<Fo
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: "כתובת המייל לא תקינה." };
 
   const supabase = await createClient();
+  const isInstructor = text(fd, "role") === "surf_instructor";
+  const role = isInstructor ? "surf_instructor" : "therapist";
+  const pay = Number(text(fd, "per_lesson_pay"));
 
   const { data: therapist, error } = await supabase
     .from("therapists")
     .insert({
       display_name: name,
       business_status: pick(text(fd, "business_status"), STATUSES, "exempt"),
-      split: pick(text(fd, "split"), SPLITS, "split_260_90"),
+      split: isInstructor ? "per_lesson" : pick(text(fd, "split"), SPLITS, "split_260_90"),
+      per_lesson_pay: isInstructor ? (Number.isInteger(pay) && pay > 0 ? pay : 100) : null,
     })
     .select("id")
     .single();
@@ -44,11 +48,11 @@ export async function addTherapistAction(_: FormState, fd: FormData): Promise<Fo
 
   if (existing) {
     await supabase.from("therapists").update({ profile_id: existing.id }).eq("id", therapist.id);
-    if (!existing.role) await supabase.from("profiles").update({ role: "therapist", full_name: name }).eq("id", existing.id);
+    if (!existing.role) await supabase.from("profiles").update({ role, full_name: name }).eq("id", existing.id);
   } else {
     const { error: invErr } = await supabase
       .from("invites")
-      .insert({ email, role: "therapist", full_name: name, therapist_id: therapist.id });
+      .insert({ email, role, full_name: name, therapist_id: therapist.id });
     if (invErr) return { error: "המטפל נשמר, אבל ההזמנה למייל נכשלה (אולי המייל כבר הוזמן)." };
   }
 
@@ -64,6 +68,7 @@ export async function updateTherapistAction(therapistId: string, fd: FormData) {
       display_name: text(fd, "display_name") || undefined,
       business_status: pick(text(fd, "business_status"), STATUSES, "exempt"),
       split: pick(text(fd, "split"), SPLITS, "split_260_90"),
+      per_lesson_pay: fd.get("per_lesson_pay") ? Math.max(0, Math.round(Number(fd.get("per_lesson_pay")) || 0)) : null,
       is_active: fd.get("is_active") === "on",
     })
     .eq("id", therapistId);

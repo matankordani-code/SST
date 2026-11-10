@@ -26,7 +26,7 @@ async function Content({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  const profile = await requireRole("owner", "therapist");
+  const profile = await requireRole("owner", "therapist", "surf_instructor");
   const isOwner = profile.role === "owner";
   const supabase = await createClient();
   const { data: myId } = await supabase.rpc("my_therapist_id");
@@ -44,7 +44,7 @@ async function Content({
   }
 
   const [{ data: t }, { data: linesData }, { data: st }] = await Promise.all([
-    supabase.from("therapists").select("display_name, split").eq("id", therapistId).maybeSingle(),
+    supabase.from("therapists").select("display_name, split, per_lesson_pay").eq("id", therapistId).maybeSingle(),
     supabase.rpc("settlement_lines", { p_therapist: therapistId, p_month: `${month}-01` }),
     supabase
       .from("settlements")
@@ -185,7 +185,9 @@ async function Content({
         <p className="text-[13px] text-muted">
           {t?.split === "full"
             ? "חלוקה: 100% למטפל."
-            : "חלוקה: על מפגש שהתקיים 260 ₪ למטפל והשאר למרכז. ביטול מאוחר: הכול למרכז. ביטול בזמן: ללא חיוב."}
+            : t?.split === "per_lesson"
+              ? `חלוקה: על שיעור שהתקיים ${t.per_lesson_pay ?? 100} ₪ למדריך והשאר למרכז. ביטול מאוחר: הכול למרכז.`
+              : "חלוקה: על מפגש שהתקיים 260 ₪ למטפל והשאר למרכז. ביטול מאוחר: הכול למרכז. ביטול בזמן: ללא חיוב."}
         </p>
       </Card>
     </AppShell>
