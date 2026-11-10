@@ -16,8 +16,9 @@ const HOSTS = {
 
 function env() {
   const mode = process.env.MORNING_ENV === "production" ? "production" : "sandbox";
-  const id = process.env.MORNING_CLIENT_ID;
-  const secret = process.env.MORNING_CLIENT_SECRET;
+  // Trim: a pasted key often carries a stray space or newline.
+  const id = process.env.MORNING_CLIENT_ID?.trim();
+  const secret = process.env.MORNING_CLIENT_SECRET?.trim();
   return { mode, hosts: HOSTS[mode], id, secret } as const;
 }
 
@@ -44,7 +45,14 @@ async function accessToken(): Promise<string> {
     body: JSON.stringify({ grant_type: "client_credentials", client_id: id, client_secret: secret }),
     cache: "no-store",
   });
-  if (!res.ok) throw new Error(`Morning auth failed (${res.status})`);
+  if (!res.ok) {
+    // OAuth error code only (e.g. invalid_client / unauthorized_client); never the secret.
+    const body = (await res.json().catch(() => ({}))) as { error?: string; error_description?: string };
+    throw new Error(
+      `Morning auth failed (${res.status} ${body.error ?? ""}: ${body.error_description ?? ""}) ` +
+        `[mode=${mode}, idLength=${id.length}, idPrefix=${id.slice(0, 4)}, secretLength=${secret.length}]`,
+    );
+  }
   const data = (await res.json()) as { accessToken: string; expiresAt: number };
   cached = { token: data.accessToken, expiresAt: data.expiresAt, mode };
   return data.accessToken;
