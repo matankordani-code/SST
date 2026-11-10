@@ -40,7 +40,7 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
   },
   therapist: {
     label: "מטפל",
-    path: "/therapist",
+    path: "/today",
     coming: [
       "היום שלי",
       "מטופלים ותיקים אישיים",
@@ -69,9 +69,15 @@ export const ROLE_INFO: Record<Role, RoleInfo> = {
 export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> = {
   owner: [
     { href: "/owner", label: "ראשי" },
+    { href: "/today", label: "היום שלי" },
+    { href: "/calendar", label: "יומן" },
     { href: "/owner/clinic", label: "הקליניקה שלי" },
   ],
-  therapist: [{ href: "/therapist", label: "מטופלים" }],
+  therapist: [
+    { href: "/today", label: "היום שלי" },
+    { href: "/calendar", label: "יומן" },
+    { href: "/therapist", label: "מטופלים" },
+  ],
 };
 
 export function isRole(value: unknown): value is Role {

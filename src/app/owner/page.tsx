@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { Th } from "@/components/my-clients";
+import { OwnerAlerts } from "@/components/owner-alerts";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { requestAccessAction, transferClientAction } from "@/app/clients/actions";
 
@@ -35,6 +36,7 @@ async function Content() {
 
   return (
     <AppShell profile={profile} active="/owner">
+      <OwnerAlerts />
       <Card title="מעקב טיפולים">
         <p className="text-[13px] text-muted">
           אתה רואה נתוני מעקב לכל מטופל. התיק האישי נפתח רק אם המטפל אישר שיתוף.
@@ -126,8 +128,6 @@ async function Content() {
       <Card title="בהמשך יופיעו כאן">
         <ul className="list-disc ps-5 text-muted">
           <li>הכנסות החודש ונקודת איזון</li>
-          <li>התראות שדורשות פעולה</li>
-          <li>לוח טיפולים שבועי וחודשי</li>
           <li>התחשבנות עם מטפלים</li>
         </ul>
       </Card>

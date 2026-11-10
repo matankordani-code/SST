@@ -7,6 +7,7 @@ import { Loading } from "@/components/loading";
 import { Field, inputClass } from "@/components/field";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { setShareAction, updateFileAction } from "@/app/clients/actions";
+import { ClientCards, ClientSessions } from "@/components/client-extras";
 
 export default function ClientPage({ params }: PageProps<"/clients/[id]">) {
   return (
@@ -72,6 +73,9 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
           <Item label="כמות טיפולים מתוכננת">{client.planned_sessions ?? "—"}</Item>
         </dl>
       </Card>
+
+      <ClientCards clientId={id} method={client.payment_method} />
+      <ClientSessions clientId={id} />
 
       {!file ? (
         <Card title="תוכן טיפולי">
@@ -143,9 +147,6 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
               </Item>
             </dl>
           )}
-          <p className="text-[13px] text-muted">
-            סיכומי מפגשים ומגמת מצב יתווספו כאן עם דיווח המפגשים.
-          </p>
         </Card>
       )}
     </AppShell>
