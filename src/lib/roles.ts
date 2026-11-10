@@ -72,6 +72,7 @@ export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> 
     { href: "/today", label: "היום שלי" },
     { href: "/calendar", label: "יומן" },
     { href: "/owner/clinic", label: "הקליניקה שלי" },
+    { href: "/club", label: "מועדון" },
     { href: "/owner/income", label: "הכנסות" },
     { href: "/owner/settlements", label: "התחשבנות" },
     { href: "/owner/therapists", label: "מטפלים" },
@@ -83,6 +84,8 @@ export const ROLE_NAV: Partial<Record<Role, { href: string; label: string }[]>> 
     { href: "/therapist", label: "מטופלים" },
     { href: "/month", label: "סיכום חודשי" },
   ],
+  club_manager: [{ href: "/club", label: "מועדון" }],
+  member: [{ href: "/member", label: "האימונים שלי" }],
   surf_instructor: [
     { href: "/today", label: "היום שלי" },
     { href: "/calendar", label: "יומן שיעורים" },
