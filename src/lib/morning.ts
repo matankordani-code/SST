@@ -169,13 +169,17 @@ export async function createPaymentForm(input: PaymentFormInput): Promise<string
     }),
     cache: "no-store",
   });
-  const data = (await res.json().catch(() => ({}))) as {
-    url?: string;
-    errorCode?: number;
-    errorDescription?: string;
-  };
+  const raw = await res.text();
+  let data: { url?: string; errorCode?: number; errorDescription?: string; errorMessage?: string } = {};
+  try {
+    data = JSON.parse(raw);
+  } catch {}
   if (!res.ok || !data.url) {
-    throw new Error(`Morning payment form failed: ${data.errorDescription ?? res.status}`);
+    // Morning's own error text (no secrets in it) — needed to see which field it rejects.
+    throw new Error(
+      `Morning payment form failed: ${res.status} code=${data.errorCode ?? "-"} ` +
+        `msg=${data.errorDescription ?? data.errorMessage ?? "-"} body=${raw.slice(0, 500)}`,
+    );
   }
   return data.url;
 }
