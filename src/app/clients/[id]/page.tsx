@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
@@ -53,7 +54,19 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <AppShell profile={profile} active={back}>
-      <Card title={`תיק אישי · ${client.full_name}`}>
+      <Card
+        title={`תיק אישי · ${client.full_name}`}
+        actions={
+          (treating || profile.role === "owner") && (
+            <Link
+              href={`/clients/${id}/edit`}
+              className="flex min-h-11 items-center rounded-lg border border-field bg-white px-4 text-sm hover:bg-sand"
+            >
+              עריכת פרטים
+            </Link>
+          )
+        }
+      >
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3 text-sm">
           <Item label="מטפל">{client.therapist?.display_name ?? "—"}</Item>
           <Item label="טלפון">

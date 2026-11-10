@@ -56,6 +56,42 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
   redirect(`/clients/${data}`);
 }
 
+export async function updateClientAction(
+  clientId: string,
+  _: FormState,
+  fd: FormData,
+): Promise<FormState> {
+  const fullName = text(fd, "full_name");
+  if (!fullName) return { error: "חסר שם מלא." };
+  const age = int(fd, "age");
+  const planned = int(fd, "planned_sessions");
+  const rate = int(fd, "rate");
+  if (Number.isNaN(age) || Number.isNaN(planned) || Number.isNaN(rate)) {
+    return { error: "גיל, כמות טיפולים ותעריף צריכים להיות מספרים שלמים." };
+  }
+  const method = text(fd, "payment_method");
+  const payerOther = fd.get("payer_other") === "on";
+  if (payerOther && !text(fd, "payer_name")) return { error: "חסר שם המשלם." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_client", {
+    p_client_id: clientId,
+    p_full_name: fullName,
+    p_phone: text(fd, "phone"),
+    p_email: text(fd, "email"),
+    p_age: age,
+    p_planned_sessions: planned,
+    p_payment_method: isPaymentMethod(method) ? method : "single",
+    p_rate: rate ?? 350,
+    p_payer_other: payerOther,
+    p_payer_name: text(fd, "payer_name"),
+    p_payer_phone: text(fd, "payer_phone"),
+    p_payer_email: text(fd, "payer_email"),
+  });
+  if (error) return { error: "השמירה נכשלה. נסה שוב." };
+  redirect(`/clients/${clientId}`);
+}
+
 export async function updateFileAction(clientId: string, fd: FormData) {
   const supabase = await createClient();
   await supabase

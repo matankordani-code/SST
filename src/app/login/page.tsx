@@ -19,11 +19,18 @@ export default function LoginPage() {
     setError(null);
     setBusy(true);
     const supabase = createClient();
+    // Only existing users, or people the owner invited, can sign in.
+    // A new account is created only for an invited email.
+    const { data: allowed } = await supabase.rpc("login_allowed", { p_email: email.trim() });
+    if (!allowed) {
+      setBusy(false);
+      setError("המייל הזה לא רשום במערכת. פנה למתניה כדי שיפתח לך משתמש.");
+      return;
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        // Only users the owner added can sign in. No open sign-up.
-        shouldCreateUser: false,
+        shouldCreateUser: allowed === "invited",
         emailRedirectTo: `${window.location.origin}/auth/confirm`,
       },
     });
