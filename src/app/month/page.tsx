@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { StatusBadge } from "@/components/status-badge";
@@ -29,7 +30,7 @@ async function Content({
   const profile = await requirePerm("settlements");
   const isOwner = profile.perms.settlements === 2; // manages every therapist
   const supabase = await createClient();
-  const { data: myId } = await supabase.rpc("my_therapist_id");
+  const myId = await myTherapistId(profile, supabase);
 
   const month = isMonthKey(sp.m) ? sp.m : monthOf(new Date());
   const therapistId = isOwner && typeof sp.t === "string" ? sp.t : (myId as string | null);

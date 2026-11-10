@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { myTherapistId } from "@/lib/view";
 import { AppShell } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { NewClientForm } from "./new-client-form";
@@ -20,7 +21,7 @@ async function Content() {
   const pickTherapist = profile.perms.clients === 2;
 
   const [{ data: myId }, { data: therapists }] = await Promise.all([
-    supabase.rpc("my_therapist_id"),
+    myTherapistId(profile, supabase).then((data) => ({ data })),
     pickTherapist
       ? supabase.from("therapists").select("id, display_name").eq("is_active", true).order("display_name")
       : Promise.resolve({ data: null }),

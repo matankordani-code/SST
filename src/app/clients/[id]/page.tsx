@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { Field, inputClass } from "@/components/field";
@@ -39,7 +40,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
       .select("goal, intro, shared_with_owner, owner_requested_at")
       .eq("client_id", id)
       .maybeSingle<FileRow>(),
-    supabase.rpc("my_therapist_id"),
+    myTherapistId(profile, supabase).then((data) => ({ data })),
   ]);
 
   // RLS returns nothing for clients this user may not see.

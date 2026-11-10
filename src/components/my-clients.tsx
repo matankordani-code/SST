@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import type { Profile } from "@/lib/auth";
+import { myTherapistId } from "@/lib/view";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { Card } from "@/components/app-shell";
 
 // The signed-in therapist's own clients (also the owner's "הקליניקה שלי").
-export async function MyClients({ showImport = false }: { showImport?: boolean } = {}) {
+export async function MyClients({ profile, showImport = false }: { profile: Profile; showImport?: boolean }) {
   const supabase = await createClient();
-  const { data: myId } = await supabase.rpc("my_therapist_id");
+  const myId = await myTherapistId(profile, supabase);
 
   if (!myId) {
     return (

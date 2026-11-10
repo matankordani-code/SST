@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { NO_ID, myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { SESSION_SELECT, STATUS_CLASS, type SessionRow } from "@/lib/sessions";
@@ -41,6 +42,8 @@ async function Content({
     .lt("starts_at", israelToUtc(next, "00:00").toISOString())
     .order("starts_at");
   if (isOwner && filter !== "all") query = query.eq("therapist_id", filter);
+  // Own calendar only: filter explicitly (the owner viewing as a therapist sees everything through RLS).
+  if (!isOwner) query = query.eq("therapist_id", (await myTherapistId(profile, supabase)) ?? NO_ID);
 
   const [{ data }, { data: therapists }] = await Promise.all([
     query,

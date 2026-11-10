@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { VIEW_COOKIE } from "@/lib/view";
 
 // /api/morning: payment notifications from Morning; /pay: pages the payer
 // lands on after paying. Neither has a logged-in user.
@@ -29,6 +30,12 @@ export async function proxy(request: NextRequest) {
       },
     },
   );
+
+  // "View as" is view only: refuse every server action while it is on.
+  // (Leaving the view is a plain GET to /view, so it is never blocked.)
+  if (request.cookies.has(VIEW_COOKIE) && request.method === "POST" && request.headers.has("next-action")) {
+    return new NextResponse("View only: return to your own view to make changes.", { status: 403 });
+  }
 
   const {
     data: { user },

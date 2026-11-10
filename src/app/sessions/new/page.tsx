@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { NO_ID, myTherapistId } from "@/lib/view";
 import { AppShell } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { dayKey, isDayKey } from "@/lib/time";
@@ -23,12 +24,16 @@ async function Content({
   const profile = await requirePerm("calendar");
   const supabase = await createClient();
 
-  // RLS: owner gets every client, a therapist only their own.
-  const { data } = await supabase
+  // Whole calendar: every client. Own calendar: only that therapist's clients.
+  let clientsQuery = supabase
     .from("clients")
     .select("id, full_name, therapist:therapists(display_name)")
     .eq("is_active", true)
     .order("full_name");
+  if (profile.perms.calendar < 2) {
+    clientsQuery = clientsQuery.eq("therapist_id", (await myTherapistId(profile, supabase)) ?? NO_ID);
+  }
+  const { data } = await clientsQuery;
   const clients = ((data ?? []) as unknown as {
     id: string;
     full_name: string;

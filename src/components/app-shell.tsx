@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Profile } from "@/lib/auth";
 import { ROLE_INFO } from "@/lib/roles";
 import { navFor } from "@/lib/nav";
+import { ViewBanner, ViewSwitcher } from "@/components/view-switcher";
 
 export function AppShell({
   profile,
@@ -25,8 +26,9 @@ export function AppShell({
             <bdi dir="ltr">SST™</bdi> · מערכת המרכז
           </h1>
           <div className="flex flex-wrap items-center gap-3">
+            {profile.realRole === "owner" && <ViewSwitcher profile={profile} />}
             <span className="text-sm text-muted">
-              מחובר/ת: <strong className="text-ink">{name}</strong> · {roleLabel}
+              מחובר/ת: <strong className="text-ink">{name}</strong> · {profile.viewAs ? ROLE_INFO.owner.label : roleLabel}
             </span>
             <form action="/auth/signout" method="post">
               <button
@@ -38,6 +40,8 @@ export function AppShell({
             </form>
           </div>
         </header>
+
+        <ViewBanner profile={profile} />
 
         {tabs.length > 0 && (
           <nav aria-label="ניווט" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
@@ -62,7 +66,14 @@ export function AppShell({
           </nav>
         )}
 
-        {children}
+        {profile.viewAs ? (
+          // View only: every field and button on the screen is disabled. Links still work.
+          <fieldset disabled className="contents">
+            {children}
+          </fieldset>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );

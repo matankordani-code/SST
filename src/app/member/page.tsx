@@ -30,7 +30,12 @@ async function Content({
   const week = weekStart(isDayKey(sp.week) ? sp.week : today);
   const end = addDays(week, 6);
 
-  const { data: me } = await supabase.from("members").select("id, full_name, plan, is_active, joined_on").eq("profile_id", profile.id).maybeSingle<{ id: string; full_name: string; plan: MemberPlan; is_active: boolean; joined_on: string }>();
+  // The owner viewing as a member sees that member; anyone else sees themself.
+  const memberQuery = supabase.from("members").select("id, full_name, plan, is_active, joined_on");
+  const { data: me } = await (profile.viewAs?.kind === "member"
+    ? memberQuery.eq("id", profile.viewAs.id)
+    : memberQuery.eq("profile_id", profile.id)
+  ).maybeSingle<{ id: string; full_name: string; plan: MemberPlan; is_active: boolean; joined_on: string }>();
 
   if (!me) {
     return (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { Field, inputClass } from "@/components/field";
@@ -35,7 +36,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   const [{ data: sData }, { data: summary }, { data: myId }] = await Promise.all([
     supabase.from("sessions").select(SESSION_SELECT).eq("id", id).maybeSingle(),
     supabase.from("session_summaries").select("did, mood, next_goal").eq("session_id", id).maybeSingle<Summary>(),
-    supabase.rpc("my_therapist_id"),
+    myTherapistId(profile, supabase).then((data) => ({ data })),
   ]);
   if (!sData) notFound();
   const s = sData as unknown as SessionRow;

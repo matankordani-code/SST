@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { StatusBadge } from "@/components/status-badge";
@@ -22,7 +23,7 @@ type Prev = { client_id: string; summary: { did: string; next_goal: string | nul
 async function Content() {
   const profile = await requirePerm("calendar");
   const supabase = await createClient();
-  const { data: myId } = await supabase.rpc("my_therapist_id");
+  const myId = await myTherapistId(profile, supabase);
   const today = dayKey(new Date());
 
   // Today, or the next work day (within two weeks) that has sessions.

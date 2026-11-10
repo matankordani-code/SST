@@ -16,7 +16,7 @@ async function Content() {
   const profile = await requireRole("therapist", "surf_instructor");
   return (
     <AppShell profile={profile} active="/therapist">
-      <MyClients />
+      <MyClients profile={profile} />
     </AppShell>
   );
 }
