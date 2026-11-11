@@ -5,6 +5,7 @@ import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
 import { Field, inputClass } from "@/components/field";
 import { saveTextsAction } from "@/app/declarations/actions";
+import { saveLocationAction } from "./actions";
 
 export default function SettingsPage() {
   return (
@@ -17,7 +18,7 @@ export default function SettingsPage() {
 async function Content() {
   const profile = await requirePerm("staff", 2);
   const supabase = await createClient();
-  const { data } = await supabase.from("app_settings").select("key, value").in("key", ["health_text", "parental_text"]);
+  const { data } = await supabase.from("app_settings").select("key, value").in("key", ["health_text", "parental_text", "session_location"]);
   const get = (k: string) => {
     const v = data?.find((r) => r.key === k)?.value;
     return typeof v === "string" ? v : "";
@@ -25,6 +26,16 @@ async function Content() {
 
   return (
     <AppShell profile={profile} active="/owner/settings">
+      <Card title="מקום המפגשים">
+        <form action={saveLocationAction} className="flex flex-wrap items-end gap-3">
+          <Field label="מוצג למטופלים באזור האישי ובתזכורת">
+            <input name="session_location" defaultValue={get("session_location")} placeholder="למשל: חוף זבולון, הרצליה" className={inputClass + " min-w-72"} />
+          </Field>
+          <button type="submit" className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-white">
+            שמירה
+          </button>
+        </form>
+      </Card>
       <Card title="נוסחי הצהרות">
         <form action={saveTextsAction} className="flex flex-col gap-4">
           <Field label="הצהרת בריאות">

@@ -3,6 +3,7 @@ import type { Profile } from "@/lib/auth";
 import { ROLE_INFO } from "@/lib/roles";
 import { navFor } from "@/lib/nav";
 import { ViewBanner, ViewSwitcher } from "@/components/view-switcher";
+import { LiveRefresh } from "@/components/live-refresh";
 
 export function AppShell({
   profile,
@@ -48,6 +49,7 @@ export function AppShell({
         </header>
 
         <ViewBanner profile={profile} />
+        <LiveRefresh />
 
         {tabs.length > 0 && (
           <nav aria-label="ניווט" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">

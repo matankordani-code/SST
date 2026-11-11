@@ -4,8 +4,8 @@ import { CopyLink } from "@/components/copy-link";
 import { NewPaymentRequest } from "@/components/new-payment-request";
 import { PAYMENT_LABEL, formatShekel, type PaymentMethod } from "@/lib/clients";
 import { morningConfigured, morningMode } from "@/lib/morning";
-import { formatDateTime } from "@/lib/time";
-import { cancelPaymentRequestAction } from "@/app/payments/actions";
+import { dayKey, formatDateTime } from "@/lib/time";
+import { cancelPaymentRequestAction, deleteManualPaymentAction, recordManualPaymentAction } from "@/app/payments/actions";
 
 type Req = {
   id: string;
@@ -25,12 +25,13 @@ type Pay = {
   source: string;
   morning_document_number: string | null;
   paid_at: string;
+  note: string | null;
 };
 
 // Payment requests (Morning links) and received payments for one client.
 export async function ClientPayments({ clientId, rate }: { clientId: string; rate: number }) {
   const supabase = await createClient();
-  const [{ data: reqs }, { data: pays }] = await Promise.all([
+  const [{ data: reqs }, paysRes] = await Promise.all([
     supabase
       .from("payment_requests")
       .select("id, kind, amount, url, status, payer_name, payer_email, created_at, paid_at")
@@ -40,12 +41,23 @@ export async function ClientPayments({ clientId, rate }: { clientId: string; rat
       .limit(10),
     supabase
       .from("payments")
-      .select("id, kind, amount, source, morning_document_number, paid_at")
+      .select("id, kind, amount, source, morning_document_number, paid_at, note")
       .eq("client_id", clientId)
       .order("paid_at", { ascending: false })
       .limit(20),
   ]);
   const open = ((reqs ?? []) as Req[]).filter((r) => r.status === "open");
+  // Before migration 0019 there is no "note" column: read without it.
+  const pays = paysRes.error
+    ? (
+        await supabase
+          .from("payments")
+          .select("id, kind, amount, source, morning_document_number, paid_at")
+          .eq("client_id", clientId)
+          .order("paid_at", { ascending: false })
+          .limit(20)
+      ).data
+    : paysRes.data;
   const payments = (pays ?? []) as Pay[];
   const configured = morningConfigured();
 
@@ -85,6 +97,28 @@ export async function ClientPayments({ clientId, rate }: { clientId: string; rat
         </div>
       )}
 
+      <form action={recordManualPaymentAction.bind(null, clientId)} className="flex flex-col gap-2 rounded-lg bg-sand p-3">
+        <span className="text-[13px] font-semibold">רישום תשלום שהתקבל מחוץ למערכת (ביט, מזומן, העברה)</span>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] items-end gap-2">
+          <label className="flex flex-col gap-1 text-[13px] text-muted">
+            סכום (₪)
+            <input name="amount" type="number" min={1} required defaultValue={rate} className="min-h-11 rounded-lg border border-field bg-white px-3 text-[15px] text-ink" />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-muted">
+            תאריך
+            <input name="paid_on" type="date" required defaultValue={dayKey(new Date())} className="min-h-11 rounded-lg border border-field bg-white px-3 text-[15px] text-ink" />
+          </label>
+          <label className="flex flex-col gap-1 text-[13px] text-muted">
+            הערה
+            <input name="note" placeholder="ביט, מזומן…" maxLength={80} className="min-h-11 rounded-lg border border-field bg-white px-3 text-[15px] text-ink" />
+          </label>
+          <button type="submit" className="min-h-11 rounded-lg border border-primary bg-white px-4 text-sm text-primary hover:bg-sand">
+            רישום תשלום
+          </button>
+        </div>
+        <span className="text-[12px] text-muted">לתשלום על מפגשים בודדים. כרטיסייה נרשמת בכרטיס הכרטיסיות.</span>
+      </form>
+
       <div className="flex flex-col gap-1">
         <span className="text-[13px] text-muted">תשלומים שהתקבלו</span>
         {payments.length === 0 ? (
@@ -96,6 +130,15 @@ export async function ClientPayments({ clientId, rate }: { clientId: string; rat
                 {formatDateTime(p.paid_at)} · {PAYMENT_LABEL[p.kind]} ·{" "}
                 <span className="tabular-nums">{formatShekel(p.amount)}</span>
                 {p.morning_document_number && ` · חשבונית ${p.morning_document_number}`}
+                {p.source === "manual" && (
+                  <>
+                    {" "}
+                    · <span className="text-muted">רישום ידני{p.note ? `: ${p.note}` : ""}</span>{" "}
+                    <form action={deleteManualPaymentAction.bind(null, p.id)} className="inline">
+                      <button className="text-[13px] text-alert-ink underline">מחיקה</button>
+                    </form>
+                  </>
+                )}
               </li>
             ))}
           </ul>

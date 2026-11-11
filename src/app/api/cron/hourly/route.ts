@@ -30,13 +30,17 @@ export async function GET() {
     db.rpc("cron_mark_sent", { p_token: secret, p_kind: kind, p_ref: ref, p_to: to });
 
   if (hour >= 20 && hour <= 22) {
-    const { data, error } = await db.rpc("cron_session_reminders", { p_token: secret, p_day: addDays(today, 1) });
+    const [{ data, error }, { data: loc }] = await Promise.all([
+      db.rpc("cron_session_reminders", { p_token: secret, p_day: addDays(today, 1) }),
+      db.rpc("cron_location", { p_token: secret }),
+    ]);
+    const location = typeof loc === "string" && loc.trim() ? loc.trim() : undefined;
     if (error) result.errors++;
     type R = { session_id: string; starts_at: string; client_first: string; therapist_name: string; to_email: string; to_name: string };
     for (const r of (data ?? []) as R[]) {
       const ok = await sendEmail({
         to: r.to_email,
-        ...reminderEmail({ toName: r.to_name, clientFirst: r.client_first, therapist: r.therapist_name, startsAt: r.starts_at }),
+        ...reminderEmail({ toName: r.to_name, clientFirst: r.client_first, therapist: r.therapist_name, startsAt: r.starts_at, location }),
       });
       if (ok) {
         await mark("reminder", r.session_id, r.to_email);

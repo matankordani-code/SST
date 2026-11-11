@@ -63,12 +63,12 @@ ${url ? `<p style="margin:16px 0 0"><a href="${url}" style="color:#1d6a80">לא�
 
 const when = (iso: string) => formatDateTime(iso);
 
-export function reminderEmail(p: { toName: string; clientFirst: string; therapist: string; startsAt: string }) {
+export function reminderEmail(p: { toName: string; clientFirst: string; therapist: string; startsAt: string; location?: string }) {
   return {
     subject: `תזכורת: מפגש מחר, ${when(p.startsAt)}`,
     body: [
       `שלום ${p.toName},`,
-      `תזכורת למפגש של ${p.clientFirst} עם ${p.therapist} מחר, ${when(p.startsAt)}.`,
+      `תזכורת למפגש של ${p.clientFirst} עם ${p.therapist} מחר, ${when(p.startsAt)}${p.location ? `, ב${p.location}` : ""}.`,
       "ביטול עד 24 שעות לפני המפגש, בהודעה אישית למטפל, אינו כרוך בחיוב.",
     ],
   };

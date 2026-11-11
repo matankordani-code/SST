@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isPaymentMethod } from "@/lib/clients";
+import { isDayKey, israelToUtc } from "@/lib/time";
 import { morningMode } from "@/lib/morning";
 import { createPaymentRequest } from "@/lib/payment-request";
 import { paymentRequestEmail, sendEmail } from "@/lib/email";
@@ -45,5 +46,28 @@ export async function sendPaymentLinkAction(clientId: string, kind: string): Pro
 export async function cancelPaymentRequestAction(requestId: string) {
   const supabase = await createClient();
   await supabase.from("payment_requests").update({ status: "cancelled" }).eq("id", requestId).eq("status", "open");
+  refresh();
+}
+
+// A per-session payment received outside Morning (Bit, cash, transfer).
+export async function recordManualPaymentAction(clientId: string, fd: FormData) {
+  const amount = Math.round(Number(fd.get("amount")));
+  const day = String(fd.get("paid_on") ?? "");
+  if (!Number.isInteger(amount) || amount <= 0 || !isDayKey(day)) return;
+  const supabase = await createClient();
+  await supabase.from("payments").insert({
+    client_id: clientId,
+    kind: "single",
+    amount,
+    source: "manual",
+    paid_at: israelToUtc(day, "12:00").toISOString(),
+    note: String(fd.get("note") ?? "").trim().slice(0, 80) || null,
+  });
+  refresh();
+}
+
+export async function deleteManualPaymentAction(paymentId: string) {
+  const supabase = await createClient();
+  await supabase.from("payments").delete().eq("id", paymentId).eq("source", "manual");
   refresh();
 }

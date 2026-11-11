@@ -42,11 +42,13 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
   // The owner previewing this portal passes the client; a real client passes nothing.
   const asClient = profile.viewAs?.kind === "client" ? profile.viewAs.id : null;
 
-  const [{ data: ov }, { data: reqs }, { data: pays }] = await Promise.all([
+  const [{ data: ov }, { data: reqs }, { data: pays }, { data: loc }] = await Promise.all([
     supabase.rpc("portal_overview", { p_as: asClient }),
     supabase.rpc("portal_open_requests", { p_as: asClient }),
     supabase.rpc("portal_payments", { p_as: asClient }),
+    supabase.from("app_settings").select("value").eq("key", "session_location").maybeSingle(),
   ]);
+  const location = typeof loc?.value === "string" ? loc.value : "";
   const clients = (ov ?? []) as Overview[];
   const open = (reqs ?? []) as OpenRequest[];
   const payments = (pays ?? []) as Payment[];
@@ -84,6 +86,11 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
               <div className="rounded-lg border border-line bg-sand px-4 py-3">
                 <p className="text-[13px] text-muted">המפגש הבא</p>
                 <p className="mt-1 text-lg font-bold">{c.next_session ? formatDateTime(c.next_session) : "אין מפגש מתוכנן"}</p>
+                {c.next_session && (
+                  <p className="text-[13px] text-muted">
+                    {location ? `${location} · ` : ""}תזכורת תישלח יום לפני, ב-20:00
+                  </p>
+                )}
               </div>
               <div className="rounded-lg border border-line bg-sand px-4 py-3">
                 <p className="text-[13px] text-muted">{isCard ? "כרטיסייה" : "אופן תשלום"}</p>
