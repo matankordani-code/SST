@@ -8,6 +8,7 @@ import { Loading } from "@/components/loading";
 import { MyClients, Th, Tile } from "@/components/my-clients";
 import { PAYMENT_LABEL, formatShekel, type PaymentMethod } from "@/lib/clients";
 import { StatusBadge } from "@/components/status-badge";
+import { ReportButton } from "@/components/report-panel";
 import { WeekGrid, type GridSession } from "@/app/calendar/week-grid";
 import { SESSION_SELECT, type CardUsage, type SessionRow } from "@/lib/sessions";
 import { cardStatus } from "@/lib/cards";
@@ -30,6 +31,8 @@ async function Content() {
   const myId = (await myTherapistId(profile, supabase)) ?? NO_ID;
   const instructor = profile.role === "surf_instructor";
   const word = instructor ? "שיעורים" : "טיפולים";
+  // Session reports (summaries) are for therapists, not surf instructors.
+  const reports = !instructor;
 
   const now = new Date();
   const nowMs = now.getTime();
@@ -154,6 +157,11 @@ async function Content() {
                     {s.client?.full_name}
                   </Link>
                   <StatusBadge status={s.status} />
+                  {reports && !s.status.startsWith("cancelled") && new Date(s.starts_at).getTime() <= nowMs + 3600_000 && (
+                    <span className="ms-auto">
+                      <ReportButton sessionId={s.id} label={s.status === "held" ? "דיווח / עריכה" : "דיווח"} />
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -171,6 +179,11 @@ async function Content() {
                   <Link href={`/sessions/${s.id}`} className="text-primary underline">
                     {s.client?.full_name} · {formatDateTime(s.starts_at)}
                   </Link>
+                  {reports && (
+                    <span className="ms-auto">
+                      <ReportButton sessionId={s.id} />
+                    </span>
+                  )}
                 </li>
               ))}
               {renew.map(({ c, st }) => (

@@ -8,6 +8,7 @@ import type { CardUsage } from "@/lib/sessions";
 import { addDays, addMonths, dayKey, formatDate, israelToUtc, monthOf, weekStart } from "@/lib/time";
 import { Card } from "@/components/app-shell";
 import { SendLinkButton } from "@/components/send-link-button";
+import { ReportButton } from "@/components/report-panel";
 
 type Charge = { client_id: string; starts_at: string; status: string; price: number };
 
@@ -51,12 +52,28 @@ export async function MyClients({
   const weekStartIso = israelToUtc(thisWeek, "00:00").toISOString();
   const weekEndIso = israelToUtc(addDays(thisWeek, 7), "00:00").toISOString();
 
-  const [{ data: chargeData }, { data: payData }, { data: cardsData }, { data: reqData }] = await Promise.all([
+  const reports = profile.role !== "surf_instructor";
+  const [{ data: chargeData }, { data: payData }, { data: cardsData }, { data: reqData }, { data: lastData }] = await Promise.all([
     supabase.from("sessions").select("client_id, starts_at, status, price").in("client_id", ids).in("status", ["held", "cancelled_late"]),
     supabase.from("payments").select("client_id, amount, kind").in("client_id", ids),
     supabase.from("punch_card_usage").select("*").in("client_id", ids),
     supabase.from("payment_requests").select("client_id").in("client_id", ids).eq("status", "open"),
+    // Each client's latest session that already took place: the "report" button.
+    reports
+      ? supabase
+          .from("sessions")
+          .select("id, client_id, starts_at, summary:session_summaries(session_id)")
+          .in("client_id", ids)
+          .in("status", ["planned", "held"])
+          .lte("starts_at", now.toISOString())
+          .gte("starts_at", israelToUtc(addDays(today, -120), "00:00").toISOString())
+          .order("starts_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
   ]);
+  const lastByClient = new Map<string, { id: string; starts_at: string; reported: boolean }>();
+  for (const x of (lastData ?? []) as unknown as { id: string; client_id: string; starts_at: string; summary: { session_id: string } | null }[]) {
+    if (!lastByClient.has(x.client_id)) lastByClient.set(x.client_id, { id: x.id, starts_at: x.starts_at, reported: !!x.summary });
+  }
   const charges = (chargeData ?? []) as Charge[];
   const pays = (payData ?? []) as { client_id: string; amount: number; kind: string }[];
   const cards = (cardsData ?? []) as CardUsage[];
@@ -119,13 +136,14 @@ export async function MyClients({
           <p className="text-muted">עדיין אין מטופלים. לחץ על &quot;מטופל חדש&quot; כדי להוסיף.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className={"w-full border-collapse text-sm " + (money ? "min-w-[900px]" : "min-w-[600px]")}>
+            <table className={"w-full border-collapse text-sm " + (money ? "min-w-[1020px]" : "min-w-[720px]")}>
               <thead>
                 <tr className="text-right text-[13px] text-muted">
                   <Th>מטופל</Th>
                   <Th>משלם</Th>
                   {money && <Th>תעריף</Th>}
                   <Th>טיפולים החודש</Th>
+                  {reports && <Th>טיפול אחרון</Th>}
                   <Th>אופן תשלום</Th>
                   <Th>מצב כרטיסייה</Th>
                   {money && <Th>חשבוניות ויתרה</Th>}
@@ -146,6 +164,21 @@ export async function MyClients({
                       <td className="px-2 py-3 text-muted">{c.payer ? `הורה: ${c.payer.full_name}` : "עצמאי/ת"}</td>
                       {money && <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>}
                       <td className="px-2 py-3 tabular-nums">{heldMonth}</td>
+                      {reports && (
+                        <td className="px-2 py-2 text-[13px]">
+                          {lastByClient.has(c.id) ? (
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className={lastByClient.get(c.id)!.reported ? "text-muted" : "font-semibold text-alert-ink"}>
+                                {formatDate(dayKey(new Date(lastByClient.get(c.id)!.starts_at))).slice(0, -5)}
+                                {lastByClient.get(c.id)!.reported ? " · דווח" : " · לא דווח"}
+                              </span>
+                              <ReportButton sessionId={lastByClient.get(c.id)!.id} label={lastByClient.get(c.id)!.reported ? "עריכה" : "דיווח"} />
+                            </span>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                      )}
                       <td className="px-2 py-3">{PAYMENT_LABEL[c.payment_method]}</td>
                       <td className="px-2 py-3 text-[13px]">
                         {!isCard ? "—" : card ? (
@@ -189,6 +222,7 @@ export async function MyClients({
                   <td />
                   {money && <td />}
                   <td className="px-2 py-2.5 tabular-nums">{heldThisMonth}</td>
+                  {reports && <td />}
                   <td />
                   <td />
                   {money && <td className="px-2 py-2.5 tabular-nums">{openTotal > 0 ? `פתוח: ${formatShekel(openTotal)}` : ""}</td>}

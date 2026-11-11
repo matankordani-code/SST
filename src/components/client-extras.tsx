@@ -8,6 +8,7 @@ import { cardStatus } from "@/lib/cards";
 import type { CardUsage, SessionStatus } from "@/lib/sessions";
 import { dayKey, formatDate, formatDateTime } from "@/lib/time";
 import { addCardAction } from "@/app/sessions/actions";
+import { ReportButton } from "@/components/report-panel";
 
 type Row = {
   id: string;
@@ -17,7 +18,10 @@ type Row = {
 };
 
 // Session history + mood trend for one client.
-export async function ClientSessions({ clientId }: { clientId: string }) {
+// canReport: the treating therapist gets a "דיווח" button on each past session.
+export async function ClientSessions({ clientId, canReport = false }: { clientId: string; canReport?: boolean }) {
+  // Sessions that already started (or start within the hour) can be reported.
+  const cutoff = new Date().getTime() + 60 * 60 * 1000;
   const supabase = await createClient();
   const { data } = await supabase
     .from("sessions")
@@ -84,10 +88,10 @@ export async function ClientSessions({ clientId }: { clientId: string }) {
       ) : (
         <ul className="flex flex-col">
           {rows.map((r) => (
-            <li key={r.id} className="border-b border-[#EFEAE0] last:border-0">
+            <li key={r.id} className="flex items-center gap-2 border-b border-[#EFEAE0] last:border-0">
               <Link
                 href={`/sessions/${r.id}`}
-                className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-sand"
+                className="flex min-h-11 flex-1 flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-sand"
               >
                 <span className="tabular-nums">
                   {formatDateTime(r.starts_at)}
@@ -99,6 +103,9 @@ export async function ClientSessions({ clientId }: { clientId: string }) {
                   </span>
                 )}
               </Link>
+              {canReport && r.status !== "cancelled_ontime" && new Date(r.starts_at).getTime() <= cutoff && (
+                <ReportButton sessionId={r.id} label={r.summary ? "עריכה" : "דיווח"} />
+              )}
             </li>
           ))}
         </ul>

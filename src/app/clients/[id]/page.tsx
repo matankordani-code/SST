@@ -12,6 +12,8 @@ import { setShareAction, updateFileAction } from "@/app/clients/actions";
 import { ClientCards, ClientSessions } from "@/components/client-extras";
 import { ClientPayments } from "@/components/client-payments";
 import { seesMoney } from "@/lib/permissions";
+import { ReportButton } from "@/components/report-panel";
+import { formatDateTime } from "@/lib/time";
 import { DeclarationsCard } from "@/components/declarations-card";
 import { PortalInvite } from "@/components/portal-invite";
 
@@ -51,6 +53,20 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   const treating = client.therapist_id === myId;
   // Payments: the treating therapist, or whoever sees the center's income.
   const money = treating || seesMoney(profile);
+  const canReport = treating && profile.role !== "surf_instructor";
+  // The latest session that already took place (or should have): "report the last session".
+  const { data: last } = canReport
+    ? await supabase
+        .from("sessions")
+        .select("id, starts_at, summary:session_summaries(session_id)")
+        .eq("client_id", id)
+        .in("status", ["planned", "held"])
+        .lte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : { data: null };
+  const lastSession = last as unknown as { id: string; starts_at: string; summary: { session_id: string } | null } | null;
 
   // Access log: record every opening of a personal file.
   if (file) {
@@ -65,12 +81,21 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         title={`תיק אישי · ${client.full_name}`}
         actions={
           (treating || profile.perms.clients === 2) && (
+            <div className="flex flex-wrap gap-2">
+            {lastSession && (
+              <ReportButton
+                sessionId={lastSession.id}
+                variant="primary"
+                label={lastSession.summary ? `עריכת הדיווח האחרון · ${formatDateTime(lastSession.starts_at)}` : `דיווח על הטיפול האחרון · ${formatDateTime(lastSession.starts_at)}`}
+              />
+            )}
             <Link
               href={`/clients/${id}/edit`}
               className="flex min-h-11 items-center rounded-lg border border-field bg-white px-4 text-sm hover:bg-sand"
             >
               עריכת פרטים
             </Link>
+            </div>
           )
         }
       >
@@ -100,7 +125,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         <PortalInvite clientId={id} />
       </Card>
       <ClientCards clientId={id} method={client.payment_method} money={money} />
-      <ClientSessions clientId={id} />
+      <ClientSessions clientId={id} canReport={canReport} />
 
       {profile.role === "surf_instructor" ? null : !file ? (
         <Card title="תוכן טיפולי">
