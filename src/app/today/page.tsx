@@ -83,7 +83,7 @@ async function Content() {
                 today,
               );
               return (
-                <li key={s.id} className="flex flex-col gap-2 rounded-lg border border-[#EFEAE0] p-3">
+                <li key={s.id} className="flex flex-col gap-2 rounded-lg border border-[#EDE4D3] p-3">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-lg font-bold tabular-nums" dir="ltr">
                       {timeOf(new Date(s.starts_at))}

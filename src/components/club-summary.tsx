@@ -52,7 +52,7 @@ export async function ClubSummary() {
             <p className="text-sm text-muted">
               {totalReg} הרשמות · תפוסה ממוצעת {occupancy}%{waiting > 0 ? ` · ${waiting} ברשימות המתנה` : ""}
             </p>
-            <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+            <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
               {trainings.map((t) => {
                 const reg = count(t.id, "registered");
                 const wait = count(t.id, "waitlist");
@@ -79,7 +79,7 @@ export async function ClubSummary() {
       </Card>
 
       <Card title="מנויים פעילים">
-        <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+        <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
           {byPlan.map((p) => (
             <li key={p.label} className="flex items-center justify-between gap-2 py-2">
               <span>

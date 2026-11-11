@@ -176,7 +176,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
               הזזת המפגש
             </button>
           </form>
-          <div className="flex flex-wrap gap-2 border-t border-[#EFEAE0] pt-3">
+          <div className="flex flex-wrap gap-2 border-t border-[#EDE4D3] pt-3">
             <form action={deleteSessionAction.bind(null, s.id, s.series_id, s.starts_at, "one")}>
               <button className="min-h-11 rounded-lg border border-[#C9A58A] bg-white px-4 text-sm text-alert-ink">
                 מחיקת המפגש

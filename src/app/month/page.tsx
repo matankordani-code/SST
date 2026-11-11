@@ -167,7 +167,7 @@ async function Content({
               </thead>
               <tbody>
                 {lines.map((l) => (
-                  <tr key={l.session_id} className="border-b border-[#EFEAE0]">
+                  <tr key={l.session_id} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-2.5 tabular-nums">{formatDateTime(l.starts_at)}</td>
                     <td className="px-2 py-2.5">{l.client_short}</td>
                     <td className="px-2 py-2.5">

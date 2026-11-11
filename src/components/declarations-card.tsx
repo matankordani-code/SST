@@ -51,7 +51,7 @@ export async function DeclarationsCard({
 
   return (
     <Card title="הצהרת בריאות">
-      <div className="flex flex-col gap-3 rounded-lg border border-[#EFEAE0] p-3">
+      <div className="flex flex-col gap-3 rounded-lg border border-[#EDE4D3] p-3">
         <div className="flex flex-wrap items-center gap-2">
           {signed ? (
             <span className="rounded-md bg-[#E4F1E6] px-2 py-0.5 text-[13px] text-[#22582C]">
@@ -83,7 +83,7 @@ export async function DeclarationsCard({
       </div>
 
       {parental.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-lg border border-[#EFEAE0] p-3">
+        <div className="flex flex-col gap-2 rounded-lg border border-[#EDE4D3] p-3">
           <div className="flex flex-wrap items-center gap-2">
             <strong>הסכמת הורה (טופס ישן)</strong>
             {parentalSigned ? (

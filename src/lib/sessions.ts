@@ -12,7 +12,7 @@ export const STATUS_LABEL: Record<SessionStatus, string> = {
 export const STATUS_CLASS: Record<SessionStatus, string> = {
   planned: "bg-[#E3F0F4] text-[#15505F]",
   held: "bg-[#E4F1E6] text-[#22582C]",
-  cancelled_ontime: "bg-[#EFEAE0] text-[#4A555A]",
+  cancelled_ontime: "bg-[#EDE4D3] text-[#4A555A]",
   cancelled_late: "bg-[#FBEBDD] text-[#7A3A0E]",
 };
 

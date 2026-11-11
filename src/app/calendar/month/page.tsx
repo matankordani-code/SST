@@ -121,7 +121,7 @@ async function Content({
                   key={d}
                   className={
                     "flex min-h-24 flex-col gap-0.5 rounded-md border p-1 " +
-                    (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EFEAE0]") +
+                    (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EDE4D3]") +
                     (inMonth ? "" : " opacity-40")
                   }
                 >

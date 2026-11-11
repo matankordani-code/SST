@@ -57,7 +57,7 @@ export async function IncomeKpis() {
             <p className="text-[13px] text-muted">סה״כ נכנס החודש</p>
             <p className="text-3xl font-bold tabular-nums">{formatShekel(total)}</p>
           </div>
-          <dl className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+          <dl className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
             {lines.map((l) => (
               <Row key={l.label} label={l.label} value={formatShekel(l.value)} />
             ))}

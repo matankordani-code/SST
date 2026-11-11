@@ -158,10 +158,10 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
         </div>
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
-          <Tile label="נגבה בחודש" value={formatShekel(total)} sub={`${pays.length} תשלומים`} />
-          <Tile label="דרך לינק תשלום" value={formatShekel(viaLink)} sub="Morning, עם קבלה" />
-          <Tile label="נרשם ידנית" value={formatShekel(manual)} sub="ביט, מזומן, העברה" />
-          <Tile label="לינקים פתוחים" value={formatShekel(openSum)} sub={`${reqs.length} ממתינים לתשלום`} alert={reqs.length > 0} />
+          <Tile icon="money" tone="sage" label="נגבה בחודש" value={formatShekel(total)} sub={`${pays.length} תשלומים`} />
+          <Tile icon="card" label="דרך לינק תשלום" value={formatShekel(viaLink)} sub="Morning, עם קבלה" />
+          <Tile icon="check" tone="sand" label="נרשם ידנית" value={formatShekel(manual)} sub="ביט, מזומן, העברה" />
+          <Tile icon="clock" label="לינקים פתוחים" value={formatShekel(openSum)} sub={`${reqs.length} ממתינים לתשלום`} alert={reqs.length > 0} />
         </div>
       </Card>
 
@@ -180,7 +180,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
               </thead>
               <tbody>
                 {byTherapist.map((r) => (
-                  <tr key={r.id ?? "none"} className="border-b border-[#EFEAE0]">
+                  <tr key={r.id ?? "none"} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-2.5">
                       {r.id ? (
                         <Link href={qs(month, r.id)} className="font-semibold text-primary underline">
@@ -222,7 +222,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
               </thead>
               <tbody>
                 {pays.map((p) => (
-                  <tr key={p.id} className="border-b border-[#EFEAE0]">
+                  <tr key={p.id} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-2.5">{formatDate(dayKey(new Date(p.paid_at)))}</td>
                     <td className="px-2 py-2.5">
                       <Link href={`/clients/${p.client_id}`} className="text-primary underline">
@@ -267,7 +267,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
               </thead>
               <tbody>
                 {reqs.map((r) => (
-                  <tr key={r.id} className="border-b border-[#EFEAE0]">
+                  <tr key={r.id} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-2.5">{formatDate(dayKey(new Date(r.created_at)))}</td>
                     <td className="px-2 py-2.5">
                       <Link href={`/clients/${r.client_id}`} className="text-primary underline">

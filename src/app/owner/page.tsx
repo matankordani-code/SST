@@ -1,4 +1,4 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { requirePerm } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -7,6 +7,7 @@ import { Loading } from "@/components/loading";
 import { Th } from "@/components/my-clients";
 import { OwnerAlerts } from "@/components/owner-alerts";
 import { IncomeKpis } from "@/components/income-kpis";
+import { OwnerOverview } from "@/components/owner-overview";
 import { ClubSummary } from "@/components/club-summary";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
 import { cardStatus } from "@/lib/cards";
@@ -61,7 +62,8 @@ async function Content() {
   const therapistName = new Map((therapists ?? []).map((t) => [t.id, t.display_name]));
 
   return (
-    <AppShell profile={profile} active="/owner">
+    <AppShell profile={profile} active="/owner" greet>
+      {isOwner && <OwnerOverview />}
       {profile.perms.income === 2 && <IncomeKpis />}
       {isOwner && <OwnerAlerts />}
       {profile.perms.club === 2 && <ClubSummary />}
@@ -95,7 +97,7 @@ async function Content() {
                   const st = statusById.get(c.id);
                   const own = c.therapist_id === myId;
                   return (
-                    <tr key={c.id} className="border-b border-[#EFEAE0]">
+                    <tr key={c.id} className="border-b border-[#EDE4D3]">
                       <td className="px-2 py-3 font-semibold">{c.full_name}</td>
                       <td className="px-2 py-2">
                         {!canTransfer ? (

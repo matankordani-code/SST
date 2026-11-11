@@ -103,7 +103,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
           }
         >
           <p className="text-[13px] text-muted">{detail.month.startsWith(now) ? "חודש נוכחי · מתעדכן עם כל דיווח ותשלום" : "חודש שהסתיים"}</p>
-          <dl className="flex max-w-xl flex-col divide-y divide-[#EFEAE0] text-sm">
+          <dl className="flex max-w-xl flex-col divide-y divide-[#EDE4D3] text-sm">
             <DRow label={`טיפולים בתשלום בודד (${detail.single_count})`} value={formatShekel(detail.single_billed)} />
             <DRow label={`כרטיסיות שנרכשו (${detail.card_count})`} value={formatShekel(detail.card_sales)} />
             <DRow label="סה״כ נכנס" value={formatShekel(detail.total_in)} strong />
@@ -134,7 +134,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
             </thead>
             <tbody>
               {[...months].reverse().map((m) => (
-                <tr key={m.month} className="border-b border-[#EFEAE0]">
+                <tr key={m.month} className="border-b border-[#EDE4D3]">
                   <td className="px-2 py-2.5 font-semibold">
                     <a href={`/owner/income?m=${m.month.slice(0, 7)}`} className="text-primary underline">
                       {formatMonth(m.month.slice(0, 7))}

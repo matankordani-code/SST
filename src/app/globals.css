@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
-/* Colors and font from the prototype. */
+/* SST look: deep sea, ocean, sand and cream (the owner's palette), soft cards. */
 @theme inline {
-  --color-sand: #f7f3ec;
-  --color-ink: #12303b;
-  --color-muted: #55656b;
-  --color-line: #e3dccf;
-  --color-field: #c9bfae;
-  --color-primary: #1d6a80;
-  --color-primary-dark: #15505f;
-  --color-alert-bg: #fbebdd;
-  --color-alert-ink: #7a3a0e;
-  --font-sans: var(--font-heebo), system-ui, sans-serif;
+  --color-sand: #f3ecdc; /* page background (cream) */
+  --color-card: #fbf8f1; /* cards */
+  --color-ink: #23404f; /* body text */
+  --color-muted: #66767d;
+  --color-line: #e6dcc8;
+  --color-field: #cdbfa8; /* input borders */
+  --color-primary: #2f5d73; /* deep sea: buttons, active menu */
+  --color-primary-dark: #24495b;
+  --color-ocean: #2f7b96; /* accents, charts */
+  --color-beach: #ccb89e; /* sand swatch: charts, decoration */
+  --color-sage: #9db8a6;
+  --color-peach: #e3a97c;
+  --color-alert-bg: #f8e3d3;
+  --color-alert-ink: #8a4322;
+  --font-sans: var(--font-rubik), system-ui, sans-serif;
 }
 
 body {
   font-family: var(--font-sans);
+}
+
+/* Soft card shadow used by Card and tiles. */
+.shadow-soft {
+  box-shadow:
+    0 1px 2px rgb(47 93 115 / 0.06),
+    0 6px 18px rgb(47 93 115 / 0.07);
 }

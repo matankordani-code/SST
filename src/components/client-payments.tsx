@@ -80,7 +80,7 @@ export async function ClientPayments({ clientId, rate }: { clientId: string; rat
         <div className="flex flex-col gap-2">
           <span className="text-[13px] text-muted">ממתינות לתשלום</span>
           {open.map((r) => (
-            <div key={r.id} className="flex flex-col gap-2 rounded-lg border border-[#EFEAE0] p-3 text-sm">
+            <div key={r.id} className="flex flex-col gap-2 rounded-lg border border-[#EDE4D3] p-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <strong>{PAYMENT_LABEL[r.kind]}</strong>
                 <span className="tabular-nums">{formatShekel(r.amount)}</span>
@@ -126,7 +126,7 @@ export async function ClientPayments({ clientId, rate }: { clientId: string; rat
         ) : (
           <ul className="text-sm">
             {payments.map((p) => (
-              <li key={p.id} className="border-b border-[#EFEAE0] py-1.5 last:border-0">
+              <li key={p.id} className="border-b border-[#EDE4D3] py-1.5 last:border-0">
                 {formatDateTime(p.paid_at)} · {PAYMENT_LABEL[p.kind]} ·{" "}
                 <span className="tabular-nums">{formatShekel(p.amount)}</span>
                 {p.morning_document_number && ` · חשבונית ${p.morning_document_number}`}

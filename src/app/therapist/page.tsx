@@ -121,18 +121,16 @@ async function Content() {
     past: new Date(s.starts_at).getTime() < nowMs,
   }));
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
-  const name = (profile.viewAs?.name ?? profile.full_name ?? "").split(" ")[0];
 
   return (
-    <AppShell profile={profile} active="/therapist">
-      <h2 className="text-xl font-bold">שלום{name ? `, ${name}` : ""}</h2>
+    <AppShell profile={profile} active="/therapist" greet>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
-        <Tile label="היום" value={String(todayCount)} sub={`${word} ב-${formatDay(today)}`} />
-        <Tile label="השבוע" value={String(weekHeld + weekPlanned)} sub={`${weekHeld} התקיימו · ${weekPlanned} מתוכננים`} />
-        <Tile label="התקיימו החודש" value={String(heldMonth)} sub={word} />
-        <Tile label="ממתינים לדיווח" value={String(pending.length)} sub={pending.length ? "לסמן התקיים או ביטול" : "הכול מדווח"} alert={pending.length > 0} />
-        <Tile label={instructor ? "תלמידים" : "מטופלים פעילים"} value={String(clients.length)} sub={renew.length ? `${renew.length} כרטיסיות לחידוש` : "אין כרטיסיות לחידוש"} alert={renew.length > 0} />
+        <Tile icon="clock" label="היום" value={String(todayCount)} sub={`${word} ב-${formatDay(today)}`} />
+        <Tile icon="calendar" tone="sage" label="השבוע" value={String(weekHeld + weekPlanned)} sub={`${weekHeld} התקיימו · ${weekPlanned} מתוכננים`} />
+        <Tile icon="check" tone="sand" label="התקיימו החודש" value={String(heldMonth)} sub={word} />
+        <Tile icon="alert" label="ממתינים לדיווח" value={String(pending.length)} sub={pending.length ? "לסמן התקיים או ביטול" : "הכול מדווח"} alert={pending.length > 0} />
+        <Tile icon="people" label={instructor ? "תלמידים" : "מטופלים פעילים"} value={String(clients.length)} sub={renew.length ? `${renew.length} כרטיסיות לחידוש` : "אין כרטיסיות לחידוש"} alert={renew.length > 0} />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -147,7 +145,7 @@ async function Content() {
           {dayList.length === 0 ? (
             <p className="text-muted">אין {word} בשבועיים הקרובים.</p>
           ) : (
-            <ul className="flex flex-col divide-y divide-[#EFEAE0]">
+            <ul className="flex flex-col divide-y divide-[#EDE4D3]">
               {dayList.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center gap-3 py-2">
                   <span className="font-bold tabular-nums" dir="ltr">
@@ -211,8 +209,9 @@ async function Content() {
 
       <Card title="תשלומים ומעקב">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
-          <Tile label="נגבה החודש" value={formatShekel(paidMonth)} sub="מהמטופלים שלך" />
+          <Tile icon="money" tone="sage" label="נגבה החודש" value={formatShekel(paidMonth)} sub="מהמטופלים שלך" />
           <Tile
+            icon="card"
             label="לינקים פתוחים"
             value={String(openReqs.length)}
             sub={openReqs.length ? `${formatShekel(openReqs.reduce((n, r) => n + r.amount, 0))} ממתינים לתשלום` : "אין לינקים שממתינים"}
@@ -256,7 +255,7 @@ async function Content() {
               </thead>
               <tbody>
                 {pays.slice(0, 12).map((p) => (
-                  <tr key={p.id} className="border-b border-[#EFEAE0]">
+                  <tr key={p.id} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-2">{formatDate(dayKey(new Date(p.paid_at)))}</td>
                     <td className="px-2 py-2">{p.client?.full_name}</td>
                     <td className="px-2 py-2">{PAYMENT_LABEL[p.kind]}</td>

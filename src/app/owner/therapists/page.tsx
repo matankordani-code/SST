@@ -47,7 +47,7 @@ async function Content() {
             const email = t.profile?.email ?? inviteBy.get(t.id) ?? null;
             const pending = !t.profile && inviteBy.has(t.id);
             return (
-              <li key={t.id} className="rounded-lg border border-[#EFEAE0] p-3">
+              <li key={t.id} className="rounded-lg border border-[#EDE4D3] p-3">
                 <form action={updateTherapistAction.bind(null, t.id)} className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-[15px]">{t.display_name}</strong>
@@ -62,7 +62,7 @@ async function Content() {
                       </span>
                     )}
                     {!t.is_active && (
-                      <span className="rounded-md bg-[#EFEAE0] px-2 py-0.5 text-[13px] text-[#4A555A]">לא פעיל</span>
+                      <span className="rounded-md bg-[#EDE4D3] px-2 py-0.5 text-[13px] text-[#4A555A]">לא פעיל</span>
                     )}
                   </div>
                   <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] items-end gap-3">

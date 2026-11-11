@@ -77,7 +77,7 @@ async function Content({
               {rows.map(({ t, sum, st }) => {
                 const mismatch = st?.invoice_amount != null && st.invoice_amount !== (st.therapist_amount ?? sum.toTherapist);
                 return (
-                  <tr key={t.id} className="border-b border-[#EFEAE0]">
+                  <tr key={t.id} className="border-b border-[#EDE4D3]">
                     <td className="px-2 py-3">
                       <Link href={`/month?m=${month}&t=${t.id}`} className="font-semibold text-primary underline">
                         {t.display_name}

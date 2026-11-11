@@ -75,7 +75,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
 
         <Card title="יעדים אישיים">
           {(goals ?? []).length > 0 && (
-            <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+            <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
               {(goals ?? []).map((g) => (
                 <li key={g.id} className="flex items-center justify-between gap-2 py-2">
                   <span className={g.done ? "text-muted line-through" : ""}>{g.text}</span>

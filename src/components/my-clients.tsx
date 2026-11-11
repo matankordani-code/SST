@@ -10,6 +10,8 @@ import { Card } from "@/components/app-shell";
 import { SendLinkButton } from "@/components/send-link-button";
 import { ReportButton } from "@/components/report-panel";
 import { ContactEditor } from "@/components/contact-editor";
+import { Tile } from "@/components/stat-tile";
+export { Tile };
 
 type Charge = { client_id: string; starts_at: string; status: string; price: number };
 
@@ -113,11 +115,11 @@ export async function MyClients({
     <>
       {tiles && (
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
-        <Tile label="טיפולים החודש" value={String(heldThisMonth)} sub={`התקיימו עד ${formatDate(today).slice(0, -5)}`} />
-        <Tile label="טיפולים בשבוע הזה" value={String(heldThisWeek)} sub={isOwner ? "היעד שלך: 8–12 בשבוע" : "שהתקיימו"} />
-        {isOwner && <Tile label="הכנסות החודש" value={formatShekel(monthIncome)} sub="בודדים שהתקיימו + כרטיסיות שנרכשו" />}
+        <Tile icon="check" tone="sage" label="טיפולים החודש" value={String(heldThisMonth)} sub={`התקיימו עד ${formatDate(today).slice(0, -5)}`} />
+        <Tile icon="calendar" label="טיפולים בשבוע הזה" value={String(heldThisWeek)} sub={isOwner ? "היעד שלך: 8–12 בשבוע" : "שהתקיימו"} />
+        {isOwner && <Tile icon="money" tone="sand" label="הכנסות החודש" value={formatShekel(monthIncome)} sub="בודדים שהתקיימו + כרטיסיות שנרכשו" />}
         {money && (
-          <Tile label="יתרות פתוחות" value={formatShekel(openTotal)} sub={openCount ? `${openCount} טיפולים בודדים שלא שולמו` : "הכול שולם"} alert={openTotal > 0} />
+          <Tile icon="card" label="יתרות פתוחות" value={formatShekel(openTotal)} sub={openCount ? `${openCount} טיפולים בודדים שלא שולמו` : "הכול שולם"} alert={openTotal > 0} />
         )}
       </div>
       )}
@@ -162,7 +164,7 @@ export async function MyClients({
                   const isCard = c.payment_method !== "single";
                   const renew = isCard && (!card || card.renew);
                   return (
-                    <tr key={c.id} className="border-b border-[#EFEAE0]">
+                    <tr key={c.id} className="border-b border-[#EDE4D3]">
                       <td className="px-2 py-3">
                         <Link href={`/clients/${c.id}`} className="font-semibold text-primary underline">
                           {c.full_name}
@@ -265,16 +267,6 @@ export async function MyClients({
   );
 }
 
-export function Tile({ label, value, sub, alert }: { label: string; value: string; sub: string; alert?: boolean }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-xl border border-line bg-white p-4">
-      <span className="text-[13px] text-muted">{label}</span>
-      <span className={"text-2xl font-bold tabular-nums " + (alert ? "text-alert-ink" : "")}>{value}</span>
-      <span className="text-[12px] text-muted">{sub}</span>
-    </div>
-  );
-}
-
 export function Th({ children }: { children: React.ReactNode }) {
-  return <th className="border-b border-line px-2 py-2.5 font-medium">{children}</th>;
+  return <th className="bg-[#F4EEE2] px-3 py-2.5 font-medium first:rounded-r-xl last:rounded-l-xl">{children}</th>;
 }

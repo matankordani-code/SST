@@ -126,7 +126,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
             </thead>
             <tbody>
               {TEMPLATE_ROLES.map((role) => (
-                <tr key={role} className="border-t border-[#EFEAE0]">
+                <tr key={role} className="border-t border-[#EDE4D3]">
                   <th scope="row" className="px-2 py-3 text-right font-semibold">
                     {ROLE_INFO[role].label}
                   </th>
@@ -185,7 +185,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
                 const mine = exceptions.get(person.id);
                 const isOwnerRow = person.role === "owner";
                 return (
-                  <tr key={person.id} className="border-t border-[#EFEAE0]">
+                  <tr key={person.id} className="border-t border-[#EDE4D3]">
                     <th scope="row" className="px-2 py-3 text-right align-top font-normal">
                       <span className="block font-semibold">{person.full_name || person.email}</span>
                       <span className="block text-[13px] text-muted">{ROLE_INFO[person.role].label}</span>

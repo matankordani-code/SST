@@ -175,7 +175,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
               </thead>
               <tbody>
                 {payments.map((p, i) => (
-                  <tr key={i} className="border-t border-[#EFEAE0]">
+                  <tr key={i} className="border-t border-[#EDE4D3]">
                     <td className="px-2 py-3">{formatDate(dayKey(new Date(p.paid_at)))}</td>
                     <td className="px-2 py-3">{p.description}</td>
                     <td className="px-2 py-3 tabular-nums">{formatShekel(p.amount)}</td>

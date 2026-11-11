@@ -88,7 +88,7 @@ export async function ClientSessions({ clientId, canReport = false }: { clientId
       ) : (
         <ul className="flex flex-col">
           {rows.map((r) => (
-            <li key={r.id} className="flex items-center gap-2 border-b border-[#EFEAE0] last:border-0">
+            <li key={r.id} className="flex items-center gap-2 border-b border-[#EDE4D3] last:border-0">
               <Link
                 href={`/sessions/${r.id}`}
                 className="flex min-h-11 flex-1 flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-sand"

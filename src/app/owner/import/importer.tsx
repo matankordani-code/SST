@@ -116,7 +116,7 @@ export function Importer({
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={i} className={"border-b border-[#EFEAE0] " + (r.include ? "" : "opacity-50")}>
+                  <tr key={i} className={"border-b border-[#EDE4D3] " + (r.include ? "" : "opacity-50")}>
                     <td className="px-2 py-1.5">
                       <input
                         type="checkbox"

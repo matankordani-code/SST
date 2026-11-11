@@ -89,14 +89,14 @@ async function Content({
             const list = trainings.filter((t) => t.weekday === dow);
             if (list.length === 0) return null;
             return (
-              <div key={d} className={"rounded-lg border p-3 " + (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EFEAE0]")}>
+              <div key={d} className={"rounded-lg border p-3 " + (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EDE4D3]")}>
                 <h3 className="mb-2 font-semibold">{formatDay(d)}</h3>
                 {list.map((t) => {
                   const taken = takenAt(t.id, d);
                   const my = myRegs.find((r) => r.training_id === t.id && r.on_date === d);
                   const past = d < today;
                   return (
-                    <div key={t.id} className="mb-2 flex flex-wrap items-center gap-3 border-b border-[#EFEAE0] pb-2 last:mb-0 last:border-0 last:pb-0">
+                    <div key={t.id} className="mb-2 flex flex-wrap items-center gap-3 border-b border-[#EDE4D3] pb-2 last:mb-0 last:border-0 last:pb-0">
                       <strong dir="ltr" className="tabular-nums">{hhmm(t.start_time)}</strong>
                       <span>{t.name}{t.coach ? ` · ${t.coach}` : ""}</span>
                       <span className="text-[13px] text-muted">{Math.max(0, t.capacity - taken)} מקומות פנויים</span>

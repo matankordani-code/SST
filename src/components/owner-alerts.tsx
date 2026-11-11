@@ -128,7 +128,7 @@ export async function OwnerAlerts() {
         {nothing ? (
           <p className="text-muted">אין כרגע משהו שדורש פעולה.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+          <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
             {toClose.map((s) => (
               <li key={`${s.therapist_id}-${s.month}`} className="flex flex-wrap items-center justify-between gap-2 py-2">
                 <span>
@@ -178,7 +178,7 @@ export async function OwnerAlerts() {
         {recent.length === 0 ? (
           <p className="text-muted">אין פעילות בשבועיים האחרונים.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+          <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
             {recent.map((e, i) => (
               <li key={i} className="flex flex-col gap-0.5 py-2">
                 <span>{e.text}</span>

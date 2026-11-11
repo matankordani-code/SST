@@ -114,7 +114,7 @@ export async function MemberProgress({ memberId, title = "ההתקדמות של�
         {visits.length === 0 ? (
           <p className="text-sm text-muted">עדיין אין הגעות רשומות.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-[#EFEAE0] text-sm">
+          <ul className="flex flex-col divide-y divide-[#EDE4D3] text-sm">
             {visits.slice(0, 5).map((v, i) => (
               <li key={i} className="py-1.5">
                 {formatDate(v.on_date)} · {v.training?.name ?? ""}

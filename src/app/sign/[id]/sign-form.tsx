@@ -40,7 +40,7 @@ export function SignForm({
     const ctx = c.getContext("2d")!;
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#12303B";
+    ctx.strokeStyle = "#23404F";
   }, []);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
