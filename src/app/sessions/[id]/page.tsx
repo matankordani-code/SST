@@ -76,7 +76,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
           <Item label="מועד">{formatDateTime(s.starts_at)}</Item>
           <Item label="משך">{s.duration_min} דק׳</Item>
           <Item label="מטפל">{s.therapist?.display_name ?? "—"}</Item>
-          {seesMoney(profile) && <Item label="מחיר">{formatShekel(s.price)}</Item>}
+          {(treating || seesMoney(profile)) && <Item label="מחיר">{formatShekel(s.price)}</Item>}
           {s.series_id && <Item label="סוג">מפגש קבוע</Item>}
         </dl>
 

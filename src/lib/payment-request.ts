@@ -23,7 +23,7 @@ export async function createPaymentRequest(
 
   const { data: c } = await supabase
     .from("clients")
-    .select("full_name, email, phone, rate, payer:payers(full_name, email, phone)")
+    .select("full_name, email, phone, rate, payer:payers(full_name, email, phone), therapist:therapists(display_name)")
     .eq("id", clientId)
     .maybeSingle();
   if (!c) return { ok: false, error: "המטופל לא נמצא." };
@@ -33,6 +33,7 @@ export async function createPaymentRequest(
     phone: string | null;
     rate: number;
     payer: { full_name: string; email: string | null; phone: string | null } | null;
+    therapist: { display_name: string } | null;
   };
 
   const amount = kind === "single" ? client.rate : CARD_PRICE[kind];
@@ -40,7 +41,8 @@ export async function createPaymentRequest(
   const payerEmail = client.payer?.email ?? client.email;
   const payerPhone = client.payer?.phone ?? client.phone;
   const description =
-    kind === "single" ? `מפגש טיפולי · ${client.full_name}` : `${PAYMENT_LABEL[kind]} · ${client.full_name}`;
+    (kind === "single" ? `מפגש טיפולי · ${client.full_name}` : `${PAYMENT_LABEL[kind]} · ${client.full_name}`) +
+    (client.therapist ? ` · ${client.therapist.display_name}` : "");
 
   // Secret token: only Morning gets it (inside notifyUrl); we keep its hash.
   const token = randomBytes(24).toString("hex");

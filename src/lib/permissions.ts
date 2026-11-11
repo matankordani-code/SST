@@ -81,9 +81,8 @@ export const FILE_ACCESS_LABEL: Record<Role, string> = {
   member: "אין",
 };
 
-// Money (rates, prices, balances, payments, card amounts) is the center's income:
-// shown only to whoever has the income permission (the owner, or someone the
-// owner allowed on the permissions board).
+// The center's money across all therapists: shown only to whoever has the
+// income permission. A treating therapist still sees their own clients' payments.
 export function seesMoney(p: { perms: Perms }): boolean {
   return p.perms.income === 2;
 }

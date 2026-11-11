@@ -27,6 +27,7 @@ export function navFor(profile: Pick<Profile, "role" | "perms">): Tab[] {
   if (teaches && p.settlements >= 1) tabs.push({ href: "/month", label: "סיכום חודשי" });
   if (p.club === 2) tabs.push({ href: "/club", label: "מועדון" });
   if (p.income === 2) tabs.push({ href: "/owner/income", label: "הכנסות" });
+  if (p.income === 2) tabs.push({ href: "/owner/payments", label: "תשלומים" });
   if (p.settlements === 2) tabs.push({ href: "/owner/settlements", label: "התחשבנות" });
   if (p.staff === 2) tabs.push({ href: "/owner/therapists", label: "מטפלים" });
   if (isOwner) tabs.push({ href: "/owner/permissions", label: "הרשאות" });

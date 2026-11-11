@@ -8,15 +8,14 @@ import type { CardUsage } from "@/lib/sessions";
 import { addDays, addMonths, dayKey, formatDate, israelToUtc, monthOf, weekStart } from "@/lib/time";
 import { Card } from "@/components/app-shell";
 import { SendLinkButton } from "@/components/send-link-button";
-import { seesMoney } from "@/lib/permissions";
 
 type Charge = { client_id: string; starts_at: string; status: string; price: number };
 
 // "הקליניקה שלי" / the therapist's clients, as in the prototype: like the
 // payments spreadsheet, but filled by every report and payment.
 //   balance (per-session clients) = held + late-cancelled sessions − payments.
-// Without the income permission (therapists, by default) no money is shown:
-// no rates, balances or payment buttons. Sessions and card status only.
+// The treating therapist tracks their own clients' payments here (rates,
+// balances, payment links). Center-wide income stays behind the income permission.
 export async function MyClients({
   profile,
   showImport = false,
@@ -27,7 +26,7 @@ export async function MyClients({
   // The therapist dashboard has its own tiles.
   tiles?: boolean;
 }) {
-  const money = seesMoney(profile);
+  const money = profile.perms.clients >= 1;
   const supabase = await createClient();
   const myId = await myTherapistId(profile, supabase);
 

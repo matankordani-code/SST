@@ -5,15 +5,17 @@ import { createClient } from "@/lib/supabase/server";
 import { NO_ID, myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
-import { MyClients, Tile } from "@/components/my-clients";
+import { MyClients, Th, Tile } from "@/components/my-clients";
+import { PAYMENT_LABEL, formatShekel, type PaymentMethod } from "@/lib/clients";
 import { StatusBadge } from "@/components/status-badge";
 import { WeekGrid, type GridSession } from "@/app/calendar/week-grid";
 import { SESSION_SELECT, type CardUsage, type SessionRow } from "@/lib/sessions";
 import { cardStatus } from "@/lib/cards";
-import { addDays, dayKey, formatDateTime, formatDay, israelToUtc, monthOf, addMonths, timeOf, weekStart } from "@/lib/time";
+import { addDays, dayKey, formatDate, formatDateTime, formatDay, israelToUtc, monthOf, addMonths, timeOf, weekStart } from "@/lib/time";
 
 // The therapist's (or surf instructor's) own dashboard: today, what's waiting
-// for a report, this week's grid and their clients. No center money here.
+// for a report, payments and links sent, this week's grid and their clients.
+// Only their own clients' money; the center's income is not shown here.
 export default function TherapistPage() {
   return (
     <Suspense fallback={<Loading />}>
@@ -70,10 +72,30 @@ async function Content() {
   // Cards about to run out, and intake declarations not signed yet.
   const cardClientIds = clients.filter((c) => c.payment_method !== "single").map((c) => c.id);
   const allIds = clients.length ? clients.map((c) => c.id) : [NO_ID];
-  const [{ data: cardsData }, { data: declData }] = await Promise.all([
+  const [{ data: cardsData }, { data: declData }, { data: payData }, { data: reqData }] = await Promise.all([
     cardClientIds.length ? supabase.from("punch_card_usage").select("*").in("client_id", cardClientIds) : Promise.resolve({ data: [] }),
     supabase.from("declarations").select("client_id, status").in("client_id", allIds),
+    // My clients' payments (RLS: the treating therapist sees them).
+    supabase
+      .from("payments")
+      .select("id, amount, kind, source, morning_document_number, paid_at, client:clients(full_name)")
+      .in("client_id", allIds)
+      .gte("paid_at", iso(addDays(today, -90)))
+      .order("paid_at", { ascending: false }),
+    supabase
+      .from("payment_requests")
+      .select("id, amount, kind, created_at, client_id, client:clients(full_name)")
+      .in("client_id", allIds)
+      .eq("status", "open")
+      .order("created_at", { ascending: false }),
   ]);
+  type Pay = { id: string; amount: number; kind: PaymentMethod; source: string; morning_document_number: string | null; paid_at: string; client: { full_name: string } | null };
+  type Req = { id: string; amount: number; kind: PaymentMethod; created_at: string; client_id: string; client: { full_name: string } | null };
+  const pays = (payData ?? []) as unknown as Pay[];
+  const openReqs = (reqData ?? []) as unknown as Req[];
+  const monthStartIso = iso(`${month}-01`);
+  const paidMonth = pays.filter((p) => p.paid_at >= monthStartIso).reduce((n, p) => n + p.amount, 0);
+
   const cards = (cardsData ?? []) as CardUsage[];
   const renew = clients
     .filter((c) => c.payment_method !== "single")
@@ -173,6 +195,68 @@ async function Content() {
           )}
         </Card>
       </div>
+
+      <Card title="תשלומים ומעקב">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
+          <Tile label="נגבה החודש" value={formatShekel(paidMonth)} sub="מהמטופלים שלך" />
+          <Tile
+            label="לינקים פתוחים"
+            value={String(openReqs.length)}
+            sub={openReqs.length ? `${formatShekel(openReqs.reduce((n, r) => n + r.amount, 0))} ממתינים לתשלום` : "אין לינקים שממתינים"}
+            alert={openReqs.length > 0}
+          />
+        </div>
+        <p className="text-[13px] text-muted">
+          לינק תשלום שולחים מהשורה של המטופל ברשימה למטה, או מדף המטופל. כשהמשלם משלם, Morning מוציא קבלה, והתשלום נרשם כאן ואצל
+          מתניה, משויך אליך.
+        </p>
+        {openReqs.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-semibold">נשלחו וממתינים לתשלום</span>
+            <ul className="flex flex-col gap-1.5 text-sm">
+              {openReqs.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-2">
+                  <Link href={`/clients/${r.client_id}`} className="text-primary underline">
+                    {r.client?.full_name}
+                  </Link>
+                  <span>
+                    {PAYMENT_LABEL[r.kind]} · {formatShekel(r.amount)}
+                  </span>
+                  <span className="text-muted">נשלח {formatDateTime(r.created_at)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {pays.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[560px] border-collapse text-sm">
+              <thead>
+                <tr className="text-right text-[13px] text-muted">
+                  <Th>תאריך</Th>
+                  <Th>מטופל</Th>
+                  <Th>סוג</Th>
+                  <Th>סכום</Th>
+                  <Th>אופן</Th>
+                  <Th>קבלה</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {pays.slice(0, 12).map((p) => (
+                  <tr key={p.id} className="border-b border-[#EFEAE0]">
+                    <td className="px-2 py-2">{formatDate(dayKey(new Date(p.paid_at)))}</td>
+                    <td className="px-2 py-2">{p.client?.full_name}</td>
+                    <td className="px-2 py-2">{PAYMENT_LABEL[p.kind]}</td>
+                    <td className="px-2 py-2 tabular-nums">{formatShekel(p.amount)}</td>
+                    <td className="px-2 py-2">{p.source === "manual" ? "נרשם ידנית" : "לינק תשלום"}</td>
+                    <td className="px-2 py-2 tabular-nums">{p.morning_document_number ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
 
       <Card
         title={`השבוע שלי · ${formatDay(week)}`}

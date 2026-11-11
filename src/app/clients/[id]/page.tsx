@@ -49,7 +49,8 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   if (!clientData) notFound();
   const client = clientData as unknown as ClientRow & { therapist: { display_name: string } | null };
   const treating = client.therapist_id === myId;
-  const money = seesMoney(profile);
+  // Payments: the treating therapist, or whoever sees the center's income.
+  const money = treating || seesMoney(profile);
 
   // Access log: record every opening of a personal file.
   if (file) {
