@@ -13,6 +13,7 @@ import { ClientCards, ClientSessions } from "@/components/client-extras";
 import { ClientPayments } from "@/components/client-payments";
 import { seesMoney } from "@/lib/permissions";
 import { ReportButton } from "@/components/report-panel";
+import { ContactEditor } from "@/components/contact-editor";
 import { formatDateTime } from "@/lib/time";
 import { DeclarationsCard } from "@/components/declarations-card";
 import { defaultForm } from "@/lib/declarations";
@@ -55,6 +56,11 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   // Payments: the treating therapist, or whoever sees the center's income.
   const money = treating || seesMoney(profile);
   const canReport = treating && profile.role !== "surf_instructor";
+  const { data: invoiceRow } = await supabase
+    .from("clients")
+    .select("invoice_email, invoice_phone")
+    .eq("id", id)
+    .maybeSingle<{ invoice_email: string | null; invoice_phone: string | null }>();
   // The latest session that already took place (or should have): "report the last session".
   const { data: last } = canReport
     ? await supabase
@@ -115,6 +121,21 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
               : "המטופל עצמו"}
           </Item>
           {money && <Item label="תעריף">{formatShekel(client.rate)}</Item>}
+          {(treating || profile.perms.clients === 2) && (
+            <Item label="טלפון ומייל · חשבונית">
+              <ContactEditor
+                clientId={id}
+                clientName={client.full_name}
+                payerName={client.payer?.full_name ?? null}
+                contact={{
+                  phone: client.payer ? client.payer.phone : client.phone,
+                  email: client.payer ? client.payer.email : client.email,
+                  invoiceEmail: invoiceRow?.invoice_email ?? null,
+                  invoicePhone: invoiceRow?.invoice_phone ?? null,
+                }}
+              />
+            </Item>
+          )}
           <Item label="אופן תשלום">{PAYMENT_LABEL[client.payment_method]}</Item>
           <Item label="כמות טיפולים מתוכננת">{client.planned_sessions ?? "—"}</Item>
         </dl>

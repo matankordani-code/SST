@@ -21,11 +21,10 @@ export async function createPaymentRequest(
 ): Promise<NewRequest> {
   if (!morningConfigured()) return { ok: false, error: "החיבור ל-Morning עוד לא הוגדר (חסרים מפתחות)." };
 
-  const { data: c } = await supabase
-    .from("clients")
-    .select("full_name, email, phone, rate, payer:payers(full_name, email, phone), therapist:therapists(display_name)")
-    .eq("id", clientId)
-    .maybeSingle();
+  const cols = "full_name, email, phone, rate, payer:payers(full_name, email, phone), therapist:therapists(display_name)";
+  const withInvoice = await supabase.from("clients").select(`${cols}, invoice_email, invoice_phone`).eq("id", clientId).maybeSingle();
+  // Before migration 0022 there are no invoice contact columns.
+  const c = withInvoice.error ? (await supabase.from("clients").select(cols).eq("id", clientId).maybeSingle()).data : withInvoice.data;
   if (!c) return { ok: false, error: "המטופל לא נמצא." };
   const client = c as unknown as {
     full_name: string;
@@ -34,12 +33,16 @@ export async function createPaymentRequest(
     rate: number;
     payer: { full_name: string; email: string | null; phone: string | null } | null;
     therapist: { display_name: string } | null;
+    invoice_email?: string | null;
+    invoice_phone?: string | null;
   };
 
   const amount = kind === "single" ? client.rate : CARD_PRICE[kind];
   const payerName = client.payer?.full_name ?? client.full_name;
-  const payerEmail = client.payer?.email ?? client.email;
-  const payerPhone = client.payer?.phone ?? client.phone;
+  // Where Morning sends the receipt/invoice: the invoice contact if set,
+  // else the payer (parent), else the client.
+  const payerEmail = client.invoice_email || client.payer?.email || client.email;
+  const payerPhone = client.invoice_phone || client.payer?.phone || client.phone;
   const description =
     (kind === "single" ? `מפגש טיפולי · ${client.full_name}` : `${PAYMENT_LABEL[kind]} · ${client.full_name}`) +
     (client.therapist ? ` · ${client.therapist.display_name}` : "");

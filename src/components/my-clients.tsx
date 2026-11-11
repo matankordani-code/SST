@@ -9,6 +9,7 @@ import { addDays, addMonths, dayKey, formatDate, israelToUtc, monthOf, weekStart
 import { Card } from "@/components/app-shell";
 import { SendLinkButton } from "@/components/send-link-button";
 import { ReportButton } from "@/components/report-panel";
+import { ContactEditor } from "@/components/contact-editor";
 
 type Charge = { client_id: string; starts_at: string; status: string; price: number };
 
@@ -53,7 +54,7 @@ export async function MyClients({
   const weekEndIso = israelToUtc(addDays(thisWeek, 7), "00:00").toISOString();
 
   const reports = profile.role !== "surf_instructor";
-  const [{ data: chargeData }, { data: payData }, { data: cardsData }, { data: reqData }, { data: lastData }] = await Promise.all([
+  const [{ data: chargeData }, { data: payData }, { data: cardsData }, { data: reqData }, { data: lastData }, { data: invoiceData }] = await Promise.all([
     supabase.from("sessions").select("client_id, starts_at, status, price").in("client_id", ids).in("status", ["held", "cancelled_late"]),
     supabase.from("payments").select("client_id, amount, kind").in("client_id", ids),
     supabase.from("punch_card_usage").select("*").in("client_id", ids),
@@ -69,7 +70,12 @@ export async function MyClients({
           .gte("starts_at", israelToUtc(addDays(today, -120), "00:00").toISOString())
           .order("starts_at", { ascending: false })
       : Promise.resolve({ data: [] }),
+    // Invoice contact (migration 0022); empty before it runs.
+    supabase.from("clients").select("id, invoice_email, invoice_phone").in("id", ids),
   ]);
+  const invoice = new Map(
+    ((invoiceData ?? []) as { id: string; invoice_email: string | null; invoice_phone: string | null }[]).map((r) => [r.id, r]),
+  );
   const lastByClient = new Map<string, { id: string; starts_at: string; reported: boolean }>();
   for (const x of (lastData ?? []) as unknown as { id: string; client_id: string; starts_at: string; summary: { session_id: string } | null }[]) {
     if (!lastByClient.has(x.client_id)) lastByClient.set(x.client_id, { id: x.id, starts_at: x.starts_at, reported: !!x.summary });
@@ -136,11 +142,12 @@ export async function MyClients({
           <p className="text-muted">עדיין אין מטופלים. לחץ על &quot;מטופל חדש&quot; כדי להוסיף.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className={"w-full border-collapse text-sm " + (money ? "min-w-[1020px]" : "min-w-[720px]")}>
+            <table className={"w-full border-collapse text-sm " + (money ? "min-w-[1220px]" : "min-w-[920px]")}>
               <thead>
                 <tr className="text-right text-[13px] text-muted">
                   <Th>מטופל</Th>
                   <Th>משלם</Th>
+                  <Th>טלפון ומייל</Th>
                   {money && <Th>תעריף</Th>}
                   <Th>טיפולים החודש</Th>
                   {reports && <Th>טיפול אחרון</Th>}
@@ -162,6 +169,20 @@ export async function MyClients({
                         </Link>
                       </td>
                       <td className="px-2 py-3 text-muted">{c.payer ? `הורה: ${c.payer.full_name}` : "עצמאי/ת"}</td>
+                      <td className="px-2 py-2">
+                        <ContactEditor
+                          compact
+                          clientId={c.id}
+                          clientName={c.full_name}
+                          payerName={c.payer?.full_name ?? null}
+                          contact={{
+                            phone: c.payer ? c.payer.phone : c.phone,
+                            email: c.payer ? c.payer.email : c.email,
+                            invoiceEmail: invoice.get(c.id)?.invoice_email ?? null,
+                            invoicePhone: invoice.get(c.id)?.invoice_phone ?? null,
+                          }}
+                        />
+                      </td>
                       {money && <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>}
                       <td className="px-2 py-3 tabular-nums">{heldMonth}</td>
                       {reports && (
@@ -219,6 +240,7 @@ export async function MyClients({
               <tfoot>
                 <tr className="text-[13px] font-semibold">
                   <td className="px-2 py-2.5">סה״כ</td>
+                  <td />
                   <td />
                   {money && <td />}
                   <td className="px-2 py-2.5 tabular-nums">{heldThisMonth}</td>
