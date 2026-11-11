@@ -61,7 +61,8 @@ export async function createDeclaration(
   return { url: `${await siteUrl()}/sign/${data.id}?t=${token}` };
 }
 
-export type SendResult = { url: string; sentTo: string | null } | { error: string };
+// sentTo: the address it went to; null with failed = there is an address but sending failed.
+export type SendResult = { url: string; sentTo: string | null; failed?: string } | { error: string };
 
 // Creates the health declaration link and emails it: to the parent/payer for a
 // minor, to the client for an adult. With no email on file, returns the link
@@ -94,7 +95,7 @@ export async function sendHealthDeclaration(supabase: Supabase, clientId: string
     ],
     link: { label: "למילוי וחתימה", url: res.url },
   });
-  return { url: res.url, sentTo: ok ? to : null };
+  return ok ? { url: res.url, sentTo: to } : { url: res.url, sentTo: null, failed: to };
 }
 
 // New client: email the health declaration in the right form, so it is

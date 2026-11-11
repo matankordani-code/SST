@@ -21,7 +21,7 @@ export async function createDeclarationAction(
   return { url: res.url };
 }
 
-export type SendState = { url?: string; sentTo?: string | null; error?: string } | undefined;
+export type SendState = { url?: string; sentTo?: string | null; failed?: string; error?: string } | undefined;
 
 // Health declaration in the chosen form (adult / parent for a minor): creates
 // the link and emails it to the right person. The link is also returned, to
@@ -32,7 +32,7 @@ export async function sendHealthAction(clientId: string, form: string): Promise<
   const res = await sendHealthDeclaration(supabase, clientId, form);
   if ("error" in res) return { error: res.error };
   refresh();
-  return { url: res.url, sentTo: res.sentTo };
+  return { url: res.url, sentTo: res.sentTo, failed: res.failed };
 }
 
 export type SignState = { ok?: boolean; error?: string } | undefined;

@@ -5,8 +5,11 @@ import { formatDateTime } from "@/lib/time";
 // Env: RESEND_API_KEY, EMAIL_FROM (e.g. "SST · מרכז <noreply@your-domain>"), APP_URL.
 // Emails never carry therapeutic content: only time, therapist and a link.
 
+// Pasted keys often carry a trailing newline or space.
+const resendKey = () => (process.env.RESEND_API_KEY ?? "").trim();
+
 export function emailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY);
+  return Boolean(resendKey());
 }
 
 function appUrl() {
@@ -20,7 +23,7 @@ export async function sendEmail(input: {
   // An action button (e.g. "לתשלום"), shown under the text.
   link?: { label: string; url: string };
 }): Promise<boolean> {
-  const key = process.env.RESEND_API_KEY;
+  const key = resendKey();
   if (!key) {
     console.warn("Email skipped: RESEND_API_KEY is not set");
     return false;

@@ -46,7 +46,11 @@ export function SendHealthLink({ clientId, suggested }: { clientId: string; sugg
       {state?.error && <p className="text-sm text-alert-ink">{state.error}</p>}
       {state?.url && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-sand p-2 text-sm">
-          <span>{state.sentTo ? `✓ נשלח במייל ל-${state.sentTo}. אפשר גם:` : "אין מייל במערכת. שלח/י את הקישור (מוצג פעם אחת):"}</span>
+          <span>{state.sentTo
+              ? `✓ נשלח במייל ל-${state.sentTo}. אפשר גם:`
+              : state.failed
+                ? `השליחה במייל ל-${state.failed} נכשלה. שלח/י את הקישור (מוצג פעם אחת):`
+                : "אין מייל במערכת. שלח/י את הקישור (מוצג פעם אחת):"}</span>
           <button
             type="button"
             onClick={async () => {
