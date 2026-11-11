@@ -117,6 +117,26 @@ export function NewClientForm({
         )}
       </fieldset>
 
+      <fieldset className="flex flex-col gap-3 rounded-xl bg-sand p-4">
+        <legend className="px-1 text-sm font-semibold">חשבונית והצהרת בריאות</legend>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+          <Field label="מייל לחשבונית (אם שונה)">
+            <input name="invoice_email" type="email" dir="ltr" className={inputClass + " bg-white text-right"} />
+          </Field>
+          <Field label="טלפון לחשבונית (אם שונה)">
+            <input name="invoice_phone" type="tel" dir="ltr" className={inputClass + " bg-white text-right"} />
+          </Field>
+          <Field label="טופס הצהרת בריאות">
+            <select name="health_form" defaultValue="auto" className={inputClass + " bg-white"}>
+              <option value="auto">אוטומטי לפי הגיל והמשלם</option>
+              <option value="adult">מבוגר/ת (מעל 18)</option>
+              <option value="minor">הורה עבור בן/בת</option>
+              <option value="none">לא לשלוח עכשיו</option>
+            </select>
+          </Field>
+        </div>
+      </fieldset>
+
       {!instructor && (
         <>
           <Field label="מטרת הטיפול">
@@ -138,7 +158,7 @@ export function NewClientForm({
       )}
 
       <p className="text-[13px] text-muted">
-        בשמירה תישלח למשלם (או למטופל) הצהרת בריאות לחתימה במייל. לקטין/ה תישלח גם הסכמת הורה.
+        בשמירה תישלח הצהרת בריאות לחתימה במייל: טופס ההורה למשלם (לקטין/ה), או טופס המבוגר למטופל.
       </p>
 
       <div className="flex flex-wrap gap-2">

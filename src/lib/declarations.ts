@@ -102,9 +102,19 @@ export async function sendHealthDeclaration(supabase: Supabase, clientId: string
 // signed before the first session. Best effort: no email simply skips.
 export async function sendIntakeDeclarations(
   supabase: Supabase,
-  input: { clientId: string; clientName: string; age: number | null; toEmail: string | null; toName: string; hasPayer?: boolean },
+  input: {
+    clientId: string;
+    clientName: string;
+    age: number | null;
+    toEmail: string | null;
+    toName: string;
+    hasPayer?: boolean;
+    // From the new-client form: "adult" / "minor", "none" = don't send, else automatic.
+    form?: string;
+  },
 ) {
-  if (!input.toEmail) return;
-  const form: HealthForm = input.age !== null && input.age < 18 ? "minor" : input.age === null && input.hasPayer ? "minor" : "adult";
+  if (!input.toEmail || input.form === "none") return;
+  const auto: HealthForm = input.age !== null && input.age < 18 ? "minor" : input.age === null && input.hasPayer ? "minor" : "adult";
+  const form: HealthForm = isHealthForm(input.form) ? input.form : auto;
   await sendHealthDeclaration(supabase, input.clientId, form);
 }

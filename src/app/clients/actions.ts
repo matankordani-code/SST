@@ -56,6 +56,22 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
 
   if (error || !data) return { error: "השמירה נכשלה. נסה שוב." };
 
+  // Invoice contact (Morning's receipt), when it isn't the usual email.
+  const invoiceEmail = text(fd, "invoice_email");
+  const invoicePhone = text(fd, "invoice_phone");
+  if (invoiceEmail || invoicePhone) {
+    const contact = payerIsOther
+      ? { phone: text(fd, "payer_phone"), email: text(fd, "payer_email") }
+      : { phone: text(fd, "phone"), email: text(fd, "email") };
+    await supabase.rpc("update_client_contact", {
+      p_client_id: data as string,
+      p_phone: contact.phone,
+      p_email: contact.email,
+      p_invoice_email: invoiceEmail,
+      p_invoice_phone: invoicePhone,
+    });
+  }
+
   // Health declaration goes out by email right away: the parent's form for a minor
   // (or when someone else pays), the adult form otherwise.
   const payerEmail = payerIsOther ? text(fd, "payer_email") : text(fd, "email");
@@ -66,6 +82,7 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
     toEmail: payerEmail || null,
     toName: payerIsOther ? payerName : fullName,
     hasPayer: payerIsOther,
+    form: text(fd, "health_form"),
   };
   after(() => sendIntakeDeclarations(supabase, intake));
   redirect(`/clients/${data}`);
