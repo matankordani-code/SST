@@ -154,6 +154,7 @@ export async function OwnerOverview() {
           <div className="relative flex flex-col items-center overflow-hidden pb-12">
             <svg width="150" height="150" viewBox="0 0 42 42" role="img" aria-label={`${pct}% מהמטופלים חתמו`}>
               <circle cx="21" cy="21" r="16" fill="none" stroke="#EFE7D8" strokeWidth="3.4" />
+              {pct > 0 && (
               <circle
                 cx="21"
                 cy="21"
@@ -165,6 +166,7 @@ export async function OwnerOverview() {
                 strokeDasharray={`${(pct / 100) * 100.5} 100.5`}
                 transform="rotate(-90 21 21)"
               />
+              )}
               <text x="21" y="22.5" textAnchor="middle" fontSize="8" fontWeight="600" fill="#2F5D73">
                 {pct}%
               </text>

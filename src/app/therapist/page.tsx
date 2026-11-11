@@ -168,7 +168,7 @@ async function Content() {
 
         <Card title="דורש טיפול">
           {pending.length === 0 && renew.length === 0 && unsigned.length === 0 ? (
-            <p className="text-muted">אין כרגע משהו פתוח. 👌</p>
+            <p className="text-muted">אין כרגע משהו פתוח.</p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {pending.map((s) => (

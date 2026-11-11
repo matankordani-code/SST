@@ -40,7 +40,7 @@ export function AppShell({
   const now = new Date();
 
   const menu = (
-    <nav aria-label="ניווט" className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+    <nav aria-label="ניווט" className="-mx-4 flex gap-1 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
       {tabs.map((t) => {
         const isActive = t.href === active;
         return (
