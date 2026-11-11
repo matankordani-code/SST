@@ -6,6 +6,10 @@ import { VIEW_COOKIE, parseViewValue } from "@/lib/view";
 // A route handler (not a server action), so it still works while viewing,
 // when the proxy blocks server actions.
 export async function GET(request: NextRequest) {
+  // Only a real click switches: ignore router prefetches of this URL.
+  if (request.headers.has("next-router-prefetch") || request.headers.get("purpose") === "prefetch" || request.headers.get("sec-purpose")?.includes("prefetch")) {
+    return new NextResponse(null, { status: 204 });
+  }
   const as = request.nextUrl.searchParams.get("as");
   const supabase = await createClient();
   const { data: isOwner } = await supabase.rpc("is_owner");

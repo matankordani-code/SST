@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Profile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_INFO } from "@/lib/roles";
@@ -95,12 +94,14 @@ export function ViewBanner({ profile }: { profile: Profile }) {
       <span>
         אתה רואה את המערכת כמו <strong>{profile.viewAs.name}</strong> ({roleLabel}). תצוגה בלבד: שמירה ופעולות חסומות.
       </span>
-      <Link
+      {/* A plain link on purpose: a Next <Link> is prefetched, and prefetching
+          /view?as=off would end the view without a click. */}
+      <a
         href="/view?as=off"
         className="flex min-h-10 items-center rounded-lg bg-[#6B4A12] px-4 text-sm font-semibold text-white hover:bg-[#553a0e]"
       >
         חזרה לתצוגה שלי
-      </Link>
+      </a>
     </div>
   );
 }
