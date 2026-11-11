@@ -122,7 +122,11 @@ const DETAIL_LABEL: Record<string, string> = {
 };
 
 function Signed({ row }: { row: Row }) {
-  const details = Object.entries(row.details ?? {}).filter(([, v]) => v);
+  // Fixed order (the database returns the fields in its own order).
+  const order = Object.keys(DETAIL_LABEL);
+  const details = Object.entries(row.details ?? {})
+    .filter(([, v]) => v)
+    .sort(([a], [b]) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
   return (
     <div className="flex flex-col gap-2 text-sm">
       {details.length > 0 && (
