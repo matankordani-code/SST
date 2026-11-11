@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Step = "email" | "code";
+type Step = "email" | "code" | "password";
 
 export default function LoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -46,6 +47,26 @@ export default function LoginPage() {
     setStep("code");
   }
 
+  // Password sign-in: for people who set a password in "הסיסמה שלי".
+  async function signInWithPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (error) {
+      setError(
+        error.status === 429
+          ? "יותר מדי ניסיונות. נסה שוב בעוד כמה דקות."
+          : "המייל או הסיסמה שגויים. אם עוד לא קבעת סיסמה, היכנס עם קוד במייל וקבע אותה במסך \"הסיסמה שלי\".",
+      );
+      return;
+    }
+    router.replace("/");
+    router.refresh();
+  }
+
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -73,15 +94,17 @@ export default function LoginPage() {
         </h1>
 
         <form
-          onSubmit={step === "email" ? sendCode : verifyCode}
+          onSubmit={step === "email" ? sendCode : step === "code" ? verifyCode : signInWithPassword}
           className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-7"
         >
           <h2 className="text-xl font-bold">כניסה למערכת</h2>
 
-          {step === "email" ? (
+          {step === "email" || step === "password" ? (
             <>
               <p className="text-sm text-muted">
-                הזן את כתובת המייל שלך, ונשלח אליך קוד כניסה.
+                {step === "email"
+                  ? "הזן את כתובת המייל שלך, ונשלח אליך קוד כניסה."
+                  : "הזן את המייל ואת הסיסמה שקבעת."}
               </p>
               <label className="flex flex-col gap-1 text-sm text-muted">
                 כתובת מייל
@@ -95,6 +118,20 @@ export default function LoginPage() {
                   className="min-h-12 rounded-lg border border-field px-3 text-right text-base text-ink"
                 />
               </label>
+              {step === "password" && (
+                <label className="flex flex-col gap-1 text-sm text-muted">
+                  סיסמה
+                  <input
+                    type="password"
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    dir="ltr"
+                    className="min-h-12 rounded-lg border border-field px-3 text-right text-base text-ink"
+                  />
+                </label>
+              )}
             </>
           ) : (
             <>
@@ -132,6 +169,20 @@ export default function LoginPage() {
           >
             {busy ? "רגע…" : step === "email" ? "שלח קוד" : "כניסה"}
           </button>
+
+          {step !== "code" && (
+            <button
+              type="button"
+              onClick={() => {
+                setStep(step === "email" ? "password" : "email");
+                setPassword("");
+                setError(null);
+              }}
+              className="min-h-11 text-sm text-primary underline"
+            >
+              {step === "email" ? "כניסה עם סיסמה" : "כניסה עם קוד במייל"}
+            </button>
+          )}
 
           {step === "code" && (
             <button

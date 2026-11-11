@@ -30,6 +30,12 @@ export function AppShell({
             <span className="text-sm text-muted">
               מחובר/ת: <strong className="text-ink">{name}</strong> · {profile.viewAs ? ROLE_INFO.owner.label : roleLabel}
             </span>
+            <Link
+              href="/account"
+              className="flex min-h-10 items-center rounded-lg border border-field bg-white px-3.5 text-sm hover:bg-sand"
+            >
+              הסיסמה שלי
+            </Link>
             <form action="/auth/signout" method="post">
               <button
                 type="submit"
