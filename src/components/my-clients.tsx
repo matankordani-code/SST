@@ -8,13 +8,26 @@ import type { CardUsage } from "@/lib/sessions";
 import { addDays, addMonths, dayKey, formatDate, israelToUtc, monthOf, weekStart } from "@/lib/time";
 import { Card } from "@/components/app-shell";
 import { SendLinkButton } from "@/components/send-link-button";
+import { seesMoney } from "@/lib/permissions";
 
 type Charge = { client_id: string; starts_at: string; status: string; price: number };
 
 // "הקליניקה שלי" / the therapist's clients, as in the prototype: like the
 // payments spreadsheet, but filled by every report and payment.
 //   balance (per-session clients) = held + late-cancelled sessions − payments.
-export async function MyClients({ profile, showImport = false }: { profile: Profile; showImport?: boolean }) {
+// Without the income permission (therapists, by default) no money is shown:
+// no rates, balances or payment buttons. Sessions and card status only.
+export async function MyClients({
+  profile,
+  showImport = false,
+  tiles = true,
+}: {
+  profile: Profile;
+  showImport?: boolean;
+  // The therapist dashboard has its own tiles.
+  tiles?: boolean;
+}) {
+  const money = seesMoney(profile);
   const supabase = await createClient();
   const myId = await myTherapistId(profile, supabase);
 
@@ -76,12 +89,16 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
 
   return (
     <>
+      {tiles && (
       <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
         <Tile label="טיפולים החודש" value={String(heldThisMonth)} sub={`התקיימו עד ${formatDate(today).slice(0, -5)}`} />
         <Tile label="טיפולים בשבוע הזה" value={String(heldThisWeek)} sub={isOwner ? "היעד שלך: 8–12 בשבוע" : "שהתקיימו"} />
         {isOwner && <Tile label="הכנסות החודש" value={formatShekel(monthIncome)} sub="בודדים שהתקיימו + כרטיסיות שנרכשו" />}
-        <Tile label="יתרות פתוחות" value={formatShekel(openTotal)} sub={openCount ? `${openCount} טיפולים בודדים שלא שולמו` : "הכול שולם"} alert={openTotal > 0} />
+        {money && (
+          <Tile label="יתרות פתוחות" value={formatShekel(openTotal)} sub={openCount ? `${openCount} טיפולים בודדים שלא שולמו` : "הכול שולם"} alert={openTotal > 0} />
+        )}
       </div>
+      )}
 
       <Card
         title={`המטופלים שלי · ${clients.length}`}
@@ -98,22 +115,22 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
           </div>
         }
       >
-        <p className="text-[13px] text-muted">כמו בגיליון התשלומים, רק מתעדכן לבד מכל דיווח ותשלום.</p>
+        {money && <p className="text-[13px] text-muted">כמו בגיליון התשלומים, רק מתעדכן לבד מכל דיווח ותשלום.</p>}
         {clients.length === 0 ? (
           <p className="text-muted">עדיין אין מטופלים. לחץ על &quot;מטופל חדש&quot; כדי להוסיף.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-sm">
+            <table className={"w-full border-collapse text-sm " + (money ? "min-w-[900px]" : "min-w-[600px]")}>
               <thead>
                 <tr className="text-right text-[13px] text-muted">
                   <Th>מטופל</Th>
                   <Th>משלם</Th>
-                  <Th>תעריף</Th>
+                  {money && <Th>תעריף</Th>}
                   <Th>טיפולים החודש</Th>
                   <Th>אופן תשלום</Th>
                   <Th>מצב כרטיסייה</Th>
-                  <Th>חשבוניות ויתרה</Th>
-                  <Th>{""}</Th>
+                  {money && <Th>חשבוניות ויתרה</Th>}
+                  {money && <Th>{""}</Th>}
                 </tr>
               </thead>
               <tbody>
@@ -128,7 +145,7 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
                         </Link>
                       </td>
                       <td className="px-2 py-3 text-muted">{c.payer ? `הורה: ${c.payer.full_name}` : "עצמאי/ת"}</td>
-                      <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>
+                      {money && <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>}
                       <td className="px-2 py-3 tabular-nums">{heldMonth}</td>
                       <td className="px-2 py-3">{PAYMENT_LABEL[c.payment_method]}</td>
                       <td className="px-2 py-3 text-[13px]">
@@ -138,6 +155,7 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
                           <span className="text-muted">אין כרטיסייה רשומה</span>
                         )}
                       </td>
+                      {money && (
                       <td className="px-2 py-3 text-[13px]">
                         {isCard ? (
                           <span className="text-muted">{card ? "שולם מראש" : "—"}</span>
@@ -150,6 +168,8 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
                           <span className="text-[#22582C]">שולם</span>
                         )}
                       </td>
+                      )}
+                      {money && (
                       <td className="px-2 py-2">
                         {requested.has(c.id) ? (
                           <span className="text-[12px] text-muted">נשלחה דרישה</span>
@@ -159,6 +179,7 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
                           <SendLinkButton clientId={c.id} kind="single" label="בקשת תשלום" />
                         ) : null}
                       </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -167,27 +188,29 @@ export async function MyClients({ profile, showImport = false }: { profile: Prof
                 <tr className="text-[13px] font-semibold">
                   <td className="px-2 py-2.5">סה״כ</td>
                   <td />
-                  <td />
+                  {money && <td />}
                   <td className="px-2 py-2.5 tabular-nums">{heldThisMonth}</td>
                   <td />
                   <td />
-                  <td className="px-2 py-2.5 tabular-nums">{openTotal > 0 ? `פתוח: ${formatShekel(openTotal)}` : ""}</td>
-                  <td />
+                  {money && <td className="px-2 py-2.5 tabular-nums">{openTotal > 0 ? `פתוח: ${formatShekel(openTotal)}` : ""}</td>}
+                  {money && <td />}
                 </tr>
               </tfoot>
             </table>
           </div>
         )}
+        {money && (
         <p className="text-[12px] text-muted">
           יתרה פתוחה = מפגשים בודדים שהתקיימו (או בוטלו מאוחר) פחות תשלומים שהתקבלו, מאז תחילת העבודה במערכת. תשלום שהתקבל מחוץ
           למערכת (ביט, מזומן) רושמים בדף המטופל.
         </p>
+        )}
       </Card>
     </>
   );
 }
 
-function Tile({ label, value, sub, alert }: { label: string; value: string; sub: string; alert?: boolean }) {
+export function Tile({ label, value, sub, alert }: { label: string; value: string; sub: string; alert?: boolean }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border border-line bg-white p-4">
       <span className="text-[13px] text-muted">{label}</span>

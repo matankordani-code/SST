@@ -80,3 +80,10 @@ export const FILE_ACCESS_LABEL: Record<Role, string> = {
   client: "אין",
   member: "אין",
 };
+
+// Money (rates, prices, balances, payments, card amounts) is the center's income:
+// shown only to whoever has the income permission (the owner, or someone the
+// owner allowed on the permissions board).
+export function seesMoney(p: { perms: Perms }): boolean {
+  return p.perms.income === 2;
+}

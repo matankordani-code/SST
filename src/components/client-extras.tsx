@@ -45,18 +45,33 @@ export async function ClientSessions({ clientId }: { clientId: string }) {
     >
       {moods.length > 0 && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] text-muted">מגמת מצב המטופל (1–5, לפי הסיכומים)</span>
-          <div className="flex h-[76px] items-end gap-2 border-b border-line" role="img" aria-label={`מגמת מצב: ${moods.map((m) => m.summary!.mood).join(", ")}`}>
+          <span className="text-[13px] text-muted">
+            מגמת מצב המטופל (1–5, לפי הסיכומים)
+          </span>
+          <div
+            className="flex h-[76px] items-end gap-2 border-b border-line"
+            role="img"
+            aria-label={`מגמת מצב: ${moods.map((m) => m.summary!.mood).join(", ")}`}
+          >
             {moods.map((m) => (
-              <div key={m.id} className="flex w-11 flex-col items-center gap-0.5">
+              <div
+                key={m.id}
+                className="flex w-11 flex-col items-center gap-0.5"
+              >
                 <span className="text-xs tabular-nums">{m.summary!.mood}</span>
-                <div className="w-6 rounded-t bg-primary" style={{ height: `${m.summary!.mood! * 11}px` }} />
+                <div
+                  className="w-6 rounded-t bg-primary"
+                  style={{ height: `${m.summary!.mood! * 11}px` }}
+                />
               </div>
             ))}
           </div>
           <div className="flex gap-2" aria-hidden="true">
             {moods.map((m) => (
-              <span key={m.id} className="w-11 text-center text-[11px] text-muted">
+              <span
+                key={m.id}
+                className="w-11 text-center text-[11px] text-muted"
+              >
                 {formatDate(dayKey(new Date(m.starts_at))).slice(0, -5)}
               </span>
             ))}
@@ -70,10 +85,19 @@ export async function ClientSessions({ clientId }: { clientId: string }) {
         <ul className="flex flex-col">
           {rows.map((r) => (
             <li key={r.id} className="border-b border-[#EFEAE0] last:border-0">
-              <Link href={`/sessions/${r.id}`} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-sand">
-                <span className="tabular-nums">{formatDateTime(r.starts_at)}</span>
+              <Link
+                href={`/sessions/${r.id}`}
+                className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 py-2 hover:bg-sand"
+              >
+                <span className="tabular-nums">
+                  {formatDateTime(r.starts_at)}
+                </span>
                 <StatusBadge status={r.status} />
-                {r.summary && <span className="line-clamp-1 flex-1 text-sm text-muted">{r.summary.did}</span>}
+                {r.summary && (
+                  <span className="line-clamp-1 flex-1 text-sm text-muted">
+                    {r.summary.did}
+                  </span>
+                )}
               </Link>
             </li>
           ))}
@@ -87,9 +111,12 @@ export async function ClientSessions({ clientId }: { clientId: string }) {
 export async function ClientCards({
   clientId,
   method,
+  money = true,
 }: {
   clientId: string;
   method: PaymentMethod;
+  // Without the income permission: sessions left only, no amounts or card sales.
+  money?: boolean;
 }) {
   const supabase = await createClient();
   const { data } = await supabase
@@ -109,55 +136,92 @@ export async function ClientCards({
       {status ? (
         <p className={status.renew ? "font-semibold text-alert-ink" : ""}>
           {status.text}
-          {status.renew && (status.remaining === 0 ? " · הכרטיסייה נגמרה, צריך לחדש" : " · נשאר מפגש אחד, להציע חידוש")}
+          {status.renew &&
+            (status.remaining === 0
+              ? " · הכרטיסייה נגמרה, צריך לחדש"
+              : " · נשאר מפגש אחד, להציע חידוש")}
         </p>
       ) : (
-        <p className="text-alert-ink">אין כרטיסייה רשומה. מפגשים לא יורדו מכרטיסייה עד שתירשם אחת.</p>
+        <p className="text-alert-ink">
+          אין כרטיסייה רשומה. מפגשים לא יורדו מכרטיסייה עד שתירשם אחת.
+        </p>
       )}
 
       {cards.length > 0 && (
         <ul className="text-sm text-muted">
           {cards.map((c) => (
             <li key={c.id}>
-              כרטיסייה {c.size} · נרכשה {formatDate(c.purchased_on)} · {formatShekel(c.amount_paid)}
-              {c.paid_note ? ` · ${c.paid_note}` : ""} · נוצלו {c.used}
+              כרטיסייה {c.size} · נרכשה {formatDate(c.purchased_on)}
+              {money &&
+                ` · ${formatShekel(c.amount_paid)}${c.paid_note ? ` · ${c.paid_note}` : ""}`}{" "}
+              · נוצלו {c.used}
             </li>
           ))}
         </ul>
       )}
 
-      <details className="rounded-lg bg-sand p-3">
-        <summary className="min-h-11 cursor-pointer content-center font-semibold">רישום כרטיסייה ששולמה</summary>
-        <form action={addCardAction.bind(null, clientId)} className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] items-end gap-3">
-          <Field label="גודל">
-            <select name="size" defaultValue={defaultSize} className={inputClass + " bg-white"}>
-              <option value={4}>4 מפגשים · {formatShekel(CARD_PRICE.card4)}</option>
-              <option value={10}>10 מפגשים · {formatShekel(CARD_PRICE.card10)}</option>
-            </select>
-          </Field>
-          <Field label="תאריך תשלום">
-            <input name="purchased_on" type="date" defaultValue={today} required className={inputClass + " bg-white"} />
-          </Field>
-          <Field label="סכום ששולם (₪)">
-            <input
-              name="amount_paid"
-              type="number"
-              min={0}
-              defaultValue={defaultSize === 4 ? CARD_PRICE.card4 : CARD_PRICE.card10}
-              required
-              className={inputClass + " bg-white"}
-            />
-          </Field>
-          <Field label="אמצעי תשלום">
-            <input name="paid_note" placeholder="ביט, העברה, מזומן…" className={inputClass + " bg-white"} />
-          </Field>
-          <div>
-            <button type="submit" className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-white">
-              רישום
-            </button>
-          </div>
-        </form>
-      </details>
+      {money && (
+        <details className="rounded-lg bg-sand p-3">
+          <summary className="min-h-11 cursor-pointer content-center font-semibold">
+            רישום כרטיסייה ששולמה
+          </summary>
+          <form
+            action={addCardAction.bind(null, clientId)}
+            className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] items-end gap-3"
+          >
+            <Field label="גודל">
+              <select
+                name="size"
+                defaultValue={defaultSize}
+                className={inputClass + " bg-white"}
+              >
+                <option value={4}>
+                  4 מפגשים · {formatShekel(CARD_PRICE.card4)}
+                </option>
+                <option value={10}>
+                  10 מפגשים · {formatShekel(CARD_PRICE.card10)}
+                </option>
+              </select>
+            </Field>
+            <Field label="תאריך תשלום">
+              <input
+                name="purchased_on"
+                type="date"
+                defaultValue={today}
+                required
+                className={inputClass + " bg-white"}
+              />
+            </Field>
+            <Field label="סכום ששולם (₪)">
+              <input
+                name="amount_paid"
+                type="number"
+                min={0}
+                defaultValue={
+                  defaultSize === 4 ? CARD_PRICE.card4 : CARD_PRICE.card10
+                }
+                required
+                className={inputClass + " bg-white"}
+              />
+            </Field>
+            <Field label="אמצעי תשלום">
+              <input
+                name="paid_note"
+                placeholder="ביט, העברה, מזומן…"
+                className={inputClass + " bg-white"}
+              />
+            </Field>
+            <div>
+              <button
+                type="submit"
+                className="min-h-11 rounded-lg bg-primary px-5 font-semibold text-white"
+              >
+                רישום
+              </button>
+            </div>
+          </form>
+        </details>
+      )}
     </Card>
   );
 }

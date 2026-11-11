@@ -11,6 +11,7 @@ import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/li
 import { setShareAction, updateFileAction } from "@/app/clients/actions";
 import { ClientCards, ClientSessions } from "@/components/client-extras";
 import { ClientPayments } from "@/components/client-payments";
+import { seesMoney } from "@/lib/permissions";
 import { DeclarationsCard } from "@/components/declarations-card";
 import { PortalInvite } from "@/components/portal-invite";
 
@@ -48,6 +49,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
   if (!clientData) notFound();
   const client = clientData as unknown as ClientRow & { therapist: { display_name: string } | null };
   const treating = client.therapist_id === myId;
+  const money = seesMoney(profile);
 
   // Access log: record every opening of a personal file.
   if (file) {
@@ -85,18 +87,18 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
               ? `${client.payer.full_name}${client.payer.phone ? ` · ${client.payer.phone}` : ""}`
               : "המטופל עצמו"}
           </Item>
-          <Item label="תעריף">{formatShekel(client.rate)}</Item>
+          {money && <Item label="תעריף">{formatShekel(client.rate)}</Item>}
           <Item label="אופן תשלום">{PAYMENT_LABEL[client.payment_method]}</Item>
           <Item label="כמות טיפולים מתוכננת">{client.planned_sessions ?? "—"}</Item>
         </dl>
       </Card>
 
       {profile.role !== "surf_instructor" && <DeclarationsCard clientId={id} hasPayer={!!client.payer} />}
-      <ClientPayments clientId={id} rate={client.rate} />
+      {money && <ClientPayments clientId={id} rate={client.rate} />}
       <Card title="אזור אישי למשלם">
         <PortalInvite clientId={id} />
       </Card>
-      <ClientCards clientId={id} method={client.payment_method} />
+      <ClientCards clientId={id} method={client.payment_method} money={money} />
       <ClientSessions clientId={id} />
 
       {profile.role === "surf_instructor" ? null : !file ? (

@@ -10,6 +10,7 @@ import { Field, inputClass } from "@/components/field";
 import { StatusBadge } from "@/components/status-badge";
 import { SESSION_SELECT, STATUS_LABEL, type SessionRow, type SessionStatus } from "@/lib/sessions";
 import { formatShekel } from "@/lib/clients";
+import { seesMoney } from "@/lib/permissions";
 import { dayKey, formatDateTime, timeOf } from "@/lib/time";
 import {
   deleteSessionAction,
@@ -75,7 +76,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
           <Item label="מועד">{formatDateTime(s.starts_at)}</Item>
           <Item label="משך">{s.duration_min} דק׳</Item>
           <Item label="מטפל">{s.therapist?.display_name ?? "—"}</Item>
-          <Item label="מחיר">{formatShekel(s.price)}</Item>
+          {seesMoney(profile) && <Item label="מחיר">{formatShekel(s.price)}</Item>}
           {s.series_id && <Item label="סוג">מפגש קבוע</Item>}
         </dl>
 
