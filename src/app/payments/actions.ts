@@ -1,20 +1,14 @@
 "use server";
 
-import { createHash, randomBytes } from "node:crypto";
-import { headers } from "next/headers";
 import { refresh } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { CARD_PRICE, PAYMENT_LABEL, isPaymentMethod } from "@/lib/clients";
-import { createPaymentForm, morningConfigured } from "@/lib/morning";
+import { isPaymentMethod } from "@/lib/clients";
+import { morningMode } from "@/lib/morning";
+import { createPaymentRequest } from "@/lib/payment-request";
+import { paymentRequestEmail, sendEmail } from "@/lib/email";
 
 export type FormState = { error?: string } | undefined;
-
-async function siteUrl() {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host");
-  return `https://${host}`;
-}
 
 // Creates a payment request + a Morning payment link for a client.
 export async function createPaymentRequestAction(
@@ -22,76 +16,30 @@ export async function createPaymentRequestAction(
   _: FormState,
   fd: FormData,
 ): Promise<FormState> {
-  if (!morningConfigured()) return { error: "החיבור ל-Morning עוד לא הוגדר (חסרים מפתחות)." };
   const kind = fd.get("kind");
   if (!isPaymentMethod(kind)) return { error: "בחר סוג תשלום." };
-
   const supabase = await createClient();
-  const { data: c } = await supabase
-    .from("clients")
-    .select("full_name, email, phone, rate, payer:payers(full_name, email, phone)")
-    .eq("id", clientId)
-    .maybeSingle();
-  if (!c) return { error: "המטופל לא נמצא." };
-  const client = c as unknown as {
-    full_name: string;
-    email: string | null;
-    phone: string | null;
-    rate: number;
-    payer: { full_name: string; email: string | null; phone: string | null } | null;
-  };
-
-  const amount = kind === "single" ? client.rate : CARD_PRICE[kind];
-  const payerName = client.payer?.full_name ?? client.full_name;
-  const payerEmail = client.payer?.email ?? client.email;
-  const payerPhone = client.payer?.phone ?? client.phone;
-  const description =
-    kind === "single" ? `מפגש טיפולי · ${client.full_name}` : `${PAYMENT_LABEL[kind]} · ${client.full_name}`;
-
-  // Secret token: only Morning gets it (inside notifyUrl); we keep its hash.
-  const token = randomBytes(24).toString("hex");
-  const tokenHash = createHash("sha256").update(token).digest("hex");
-
-  const { data: req, error } = await supabase
-    .from("payment_requests")
-    .insert({
-      client_id: clientId,
-      kind,
-      amount,
-      description,
-      payer_name: payerName,
-      payer_email: payerEmail,
-      notify_token_hash: tokenHash,
-    })
-    .select("id")
-    .single();
-  if (error || !req) return { error: "יצירת הדרישה נכשלה." };
-
-  const base = await siteUrl();
-  try {
-    const url = await createPaymentForm({
-      description,
-      amount,
-      client: {
-        name: payerName,
-        emails: payerEmail ? [payerEmail] : undefined,
-        phone: payerPhone ?? undefined,
-      },
-      successUrl: `${base}/pay/done`,
-      failureUrl: `${base}/pay/failed`,
-      notifyUrl: `${base}/api/morning/notify?r=${req.id}&t=${token}`,
-      custom: req.id,
-      group: fd.get("group") === "120" ? 120 : 100,
-    });
-    await supabase.from("payment_requests").update({ url }).eq("id", req.id);
-  } catch (e) {
-    await supabase.from("payment_requests").update({ status: "cancelled" }).eq("id", req.id);
-    console.error(e);
-    return { error: "Morning לא יצר קישור תשלום. בדוק את ההגדרות ונסה שוב." };
-  }
-
+  const res = await createPaymentRequest(supabase, clientId, kind, fd.get("group") === "120" ? 120 : 100);
+  if (!res.ok) return { error: res.error };
   refresh();
   return undefined;
+}
+
+export type SendState = { error?: string; sent?: string } | undefined;
+
+// From the owner's alerts: create a renewal / payment link and email it to the payer.
+// In Morning's sandbox the link is created but not emailed (it isn't a real payment page).
+export async function sendPaymentLinkAction(clientId: string, kind: string): Promise<SendState> {
+  if (!isPaymentMethod(kind)) return { error: "סוג תשלום לא תקין." };
+  const supabase = await createClient();
+  const res = await createPaymentRequest(supabase, clientId, kind);
+  if (!res.ok) return { error: res.error };
+  refresh();
+  if (!res.payerEmail) return { sent: "הקישור נוצר. אין מייל למשלם, אפשר להעתיק אותו מדף המטופל." };
+  if (morningMode() !== "production") return { sent: "הקישור נוצר (סביבת בדיקה של Morning, לא נשלח למשלם)." };
+  const mail = paymentRequestEmail({ toName: res.payerName, description: res.description, amount: res.amount, url: res.url });
+  after(() => sendEmail({ to: res.payerEmail!, ...mail }));
+  return { sent: `נשלח ל-${res.payerEmail}` };
 }
 
 export async function cancelPaymentRequestAction(requestId: string) {

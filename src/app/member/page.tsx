@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
-import { Kpi } from "@/components/income-kpis";
+import { MemberProgress } from "@/components/member-progress";
 import { PLAN_LABEL, hhmm, type MemberPlan, type Registration, type Training } from "@/lib/club";
 import { addDays, dayKey, formatDay, isDayKey, weekStart } from "@/lib/time";
 import { cancelRegistrationAction } from "@/app/club/actions";
@@ -47,26 +47,17 @@ async function Content({
     );
   }
 
-  const [{ data: tData }, { data: counts }, { data: mine }, { data: history }] = await Promise.all([
+  const [{ data: tData }, countsRes, { data: mine }] = await Promise.all([
     supabase.from("trainings").select("*").eq("is_active", true).order("start_time"),
-    supabase.from("registrations").select("training_id, on_date, status").gte("on_date", week).lte("on_date", end).neq("status", "cancelled"),
+    // Counts for everyone (a member can't see other members' registrations).
+    supabase.rpc("training_counts", { p_from: week, p_to: end }),
     supabase.from("registrations").select("id, training_id, on_date, status").eq("member_id", me.id).gte("on_date", week).lte("on_date", end).neq("status", "cancelled"),
-    supabase.from("registrations").select("on_date").eq("member_id", me.id).eq("attended", true).order("on_date", { ascending: false }),
   ]);
   const trainings = (tData ?? []) as Training[];
   const myRegs = (mine ?? []) as Registration[];
-  const attended = (history ?? []).map((h) => h.on_date as string);
+  const counts = (countsRes.data ?? []) as { training_id: string; on_date: string; registered: number; waitlist: number }[];
+  const takenAt = (id: string, d: string) => counts.find((c) => c.training_id === id && c.on_date === d)?.registered ?? 0;
 
-  // Streak: consecutive weeks (up to this one) with at least one attended training.
-  const weeks = new Set(attended.map((d) => weekStart(d)));
-  // This week may not have a training yet, so the streak can start from last week.
-  let w = weeks.has(weekStart(today)) ? weekStart(today) : addDays(weekStart(today), -7);
-  let streak = 0;
-  while (weeks.has(w)) {
-    streak++;
-    w = addDays(w, -7);
-  }
-  const thisMonth = attended.filter((d) => d.startsWith(today.slice(0, 7))).length;
   const weekCount = myRegs.length;
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
@@ -74,12 +65,9 @@ async function Content({
   return (
     <AppShell profile={profile} active="/member">
       <Card title={`שלום ${me.full_name.split(" ")[0]}`}>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3">
-          <Kpi label="הגעות החודש" value={String(thisMonth)} strong />
-          <Kpi label="סה״כ הגעות" value={String(attended.length)} />
-          <Kpi label="רצף שבועות" value={String(streak)} />
-          <Kpi label="נרשמת השבוע" value={`${weekCount} מתוך 3`} />
-        </div>
+        <p>
+          נרשמת ל-<strong>{weekCount}</strong> מתוך 3 אימונים בשבוע הזה.
+        </p>
         <p className="text-[13px] text-muted">
           המנוי: {PLAN_LABEL[me.plan]}{me.is_active ? "" : " · מושהה"}
         </p>
@@ -104,7 +92,7 @@ async function Content({
               <div key={d} className={"rounded-lg border p-3 " + (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EFEAE0]")}>
                 <h3 className="mb-2 font-semibold">{formatDay(d)}</h3>
                 {list.map((t) => {
-                  const taken = (counts ?? []).filter((c) => c.training_id === t.id && c.on_date === d && c.status === "registered").length;
+                  const taken = takenAt(t.id, d);
                   const my = myRegs.find((r) => r.training_id === t.id && r.on_date === d);
                   const past = d < today;
                   return (
@@ -137,6 +125,8 @@ async function Content({
           {trainings.length === 0 && <p className="text-muted">אין עדיין אימונים בלו״ז.</p>}
         </div>
       </Card>
+
+      <MemberProgress memberId={me.id} />
     </AppShell>
   );
 }

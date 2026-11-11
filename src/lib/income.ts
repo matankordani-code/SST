@@ -9,6 +9,17 @@ export type MonthIncome = {
   surf_center: number;
 };
 
+// income_sources(): money in by source (migration 0017).
+export type IncomeSources = {
+  month: string;
+  single_billed: number;
+  single_count: number;
+  card_sales: number;
+  card_count: number;
+  to_staff: number;
+  held: number;
+};
+
 // Fixed monthly costs set by the owner (break-even line).
 export function parseCosts(v: unknown): number {
   const n = Number(v);

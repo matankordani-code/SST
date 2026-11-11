@@ -137,6 +137,10 @@ export function NewClientForm({
         </p>
       )}
 
+      <p className="text-[13px] text-muted">
+        בשמירה תישלח למשלם (או למטופל) הצהרת בריאות לחתימה במייל. לקטין/ה תישלח גם הסכמת הורה.
+      </p>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="submit"

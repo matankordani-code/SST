@@ -7,7 +7,11 @@ import { Loading } from "@/components/loading";
 import { Th } from "@/components/my-clients";
 import { OwnerAlerts } from "@/components/owner-alerts";
 import { IncomeKpis } from "@/components/income-kpis";
+import { ClubSummary } from "@/components/club-summary";
 import { CLIENT_SELECT, PAYMENT_LABEL, formatShekel, type ClientRow } from "@/lib/clients";
+import { cardStatus } from "@/lib/cards";
+import type { CardUsage } from "@/lib/sessions";
+import { dayKey, formatDate, israelToUtc, monthOf, addMonths } from "@/lib/time";
 import { requestAccessAction, transferClientAction } from "@/app/clients/actions";
 
 export default function OwnerPage() {
@@ -24,13 +28,31 @@ async function Content() {
   const profile = await requirePerm("clients", 2);
   const supabase = await createClient();
 
-  const [{ data: clientsData }, { data: therapists }, { data: statuses }, { data: myId }] =
+  const now = new Date();
+  const month = monthOf(now);
+  const monthStart = israelToUtc(`${month}-01`, "00:00").toISOString();
+  const monthEnd = israelToUtc(`${addMonths(month, 1)}-01`, "00:00").toISOString();
+
+  const [{ data: clientsData }, { data: therapists }, { data: statuses }, { data: myId }, { data: heldData }, { data: cardsData }] =
     await Promise.all([
       supabase.from("clients").select(CLIENT_SELECT).eq("is_active", true).order("full_name"),
       supabase.from("therapists").select("id, display_name").eq("is_active", true).order("display_name"),
       supabase.rpc("file_status"),
       supabase.rpc("my_therapist_id"),
+      // Held sessions (newest first): this month's count and the last one per client.
+      supabase.from("sessions").select("client_id, starts_at").eq("status", "held").lt("starts_at", now.toISOString()).order("starts_at", { ascending: false }).limit(2000),
+      supabase.from("punch_card_usage").select("*"),
     ]);
+
+  const held = (heldData ?? []) as { client_id: string; starts_at: string }[];
+  const heldThisMonth = new Map<string, number>();
+  const lastHeld = new Map<string, string>();
+  for (const h of held) {
+    if (!lastHeld.has(h.client_id)) lastHeld.set(h.client_id, h.starts_at);
+    if (h.starts_at >= monthStart && h.starts_at < monthEnd) heldThisMonth.set(h.client_id, (heldThisMonth.get(h.client_id) ?? 0) + 1);
+  }
+  const cards = (cardsData ?? []) as CardUsage[];
+  const today = dayKey(now);
 
   const clients = (clientsData ?? []) as unknown as ClientRow[];
   const statusById = new Map(((statuses ?? []) as FileStatus[]).map((s) => [s.client_id, s]));
@@ -42,6 +64,7 @@ async function Content() {
     <AppShell profile={profile} active="/owner">
       {profile.perms.income === 2 && <IncomeKpis />}
       {isOwner && <OwnerAlerts />}
+      {profile.perms.club === 2 && <ClubSummary />}
       <Card title="מעקב טיפולים">
         <p className="text-[13px] text-muted">
           אתה רואה נתוני מעקב לכל מטופל. התיק האישי נפתח רק אם המטפל אישר שיתוף.
@@ -56,13 +79,14 @@ async function Content() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] border-collapse text-sm">
+            <table className="w-full min-w-[860px] border-collapse text-sm">
               <thead>
                 <tr className="text-right text-[13px] text-muted">
                   <Th>מטופל</Th>
                   <Th>מטפל</Th>
-                  <Th>תעריף</Th>
-                  <Th>אופן תשלום</Th>
+                  <Th>מפגשים החודש</Th>
+                  <Th>תשלום</Th>
+                  <Th>מפגש אחרון</Th>
                   <Th>תיק אישי</Th>
                 </tr>
               </thead>
@@ -102,8 +126,22 @@ async function Content() {
                         </form>
                         )}
                       </td>
-                      <td className="px-2 py-3 tabular-nums">{formatShekel(c.rate)}</td>
-                      <td className="px-2 py-3">{PAYMENT_LABEL[c.payment_method]}</td>
+                      <td className="px-2 py-3 tabular-nums">{heldThisMonth.get(c.id) ?? 0}</td>
+                      <td className="px-2 py-3">
+                        {c.payment_method === "single" ? (
+                          `${PAYMENT_LABEL.single} · ${formatShekel(c.rate)}`
+                        ) : (
+                          <>
+                            {PAYMENT_LABEL[c.payment_method]}
+                            <span className="block text-[12px] text-muted">
+                              {cardStatus(cards.filter((x) => x.client_id === c.id), today)?.text ?? "אין כרטיסייה רשומה"}
+                            </span>
+                          </>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 text-muted">
+                        {lastHeld.has(c.id) ? formatDate(dayKey(new Date(lastHeld.get(c.id)!))) : "—"}
+                      </td>
                       <td className="px-2 py-2">
                         {own || st?.shared_with_owner ? (
                           <Link

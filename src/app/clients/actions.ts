@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { refresh } from "next/cache";
+import { after } from "next/server";
+import { sendIntakeDeclarations } from "@/lib/declarations";
 import { createClient } from "@/lib/supabase/server";
 import { isPaymentMethod } from "@/lib/clients";
 
@@ -53,6 +55,17 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
   });
 
   if (error || !data) return { error: "השמירה נכשלה. נסה שוב." };
+
+  // Health declaration (+ parental consent for a minor) goes out by email right away.
+  const payerEmail = payerIsOther ? text(fd, "payer_email") : text(fd, "email");
+  const intake = {
+    clientId: data as string,
+    clientName: fullName,
+    age,
+    toEmail: payerEmail || null,
+    toName: payerIsOther ? payerName : fullName,
+  };
+  after(() => sendIntakeDeclarations(supabase, intake));
   redirect(`/clients/${data}`);
 }
 

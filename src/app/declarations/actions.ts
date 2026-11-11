@@ -1,18 +1,12 @@
 "use server";
 
-import { createHash, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { refresh } from "next/cache";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createDeclaration } from "@/lib/declarations";
 
 export type CreateState = { url?: string; error?: string } | undefined;
-
-async function siteUrl() {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
-  const h = await headers();
-  return `https://${h.get("x-forwarded-host") ?? h.get("host")}`;
-}
 
 // Creates a signing link. The token is shown once; only its hash is stored.
 export async function createDeclarationAction(
@@ -21,29 +15,10 @@ export async function createDeclarationAction(
   _: CreateState,
 ): Promise<CreateState> {
   const supabase = await createClient();
-  const { data: setting } = await supabase
-    .from("app_settings")
-    .select("value")
-    .eq("key", kind === "health" ? "health_text" : "parental_text")
-    .maybeSingle();
-  const text = typeof setting?.value === "string" ? setting.value : "";
-  if (!text) return { error: "חסר נוסח. הגדר אותו במסך ההגדרות." };
-
-  const token = randomBytes(24).toString("hex");
-  const { data, error } = await supabase
-    .from("declarations")
-    .insert({
-      client_id: clientId,
-      kind,
-      token_hash: createHash("sha256").update(token).digest("hex"),
-      text_snapshot: text,
-    })
-    .select("id")
-    .single();
-  if (error || !data) return { error: "יצירת הקישור נכשלה." };
-
+  const res = await createDeclaration(supabase, clientId, kind);
+  if ("error" in res) return { error: res.error };
   refresh();
-  return { url: `${await siteUrl()}/sign/${data.id}?t=${token}` };
+  return { url: res.url };
 }
 
 export type SignState = { ok?: boolean; error?: string } | undefined;

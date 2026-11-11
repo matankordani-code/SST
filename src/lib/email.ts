@@ -13,7 +13,13 @@ function appUrl() {
   return (process.env.APP_URL ?? "").replace(/\/$/, "");
 }
 
-export async function sendEmail(input: { to: string; subject: string; body: string[] }): Promise<boolean> {
+export async function sendEmail(input: {
+  to: string;
+  subject: string;
+  body: string[];
+  // An action button (e.g. "לתשלום"), shown under the text.
+  link?: { label: string; url: string };
+}): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("Email skipped: RESEND_API_KEY is not set");
@@ -26,6 +32,7 @@ export async function sendEmail(input: { to: string; subject: string; body: stri
 <div style="max-width:520px;margin:0 auto;padding:24px">
 <div style="background:#fff;border:1px solid #e3dccf;border-radius:12px;padding:24px;direction:rtl;text-align:right">
 ${input.body.map((p) => `<p style="margin:0 0 12px;font-size:16px;line-height:1.6">${esc(p)}</p>`).join("")}
+${input.link ? `<p style="margin:16px 0"><a href="${esc(input.link.url)}" style="display:inline-block;background:#1d6a80;color:#fff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:10px">${esc(input.link.label)}</a></p>` : ""}
 ${url ? `<p style="margin:16px 0 0"><a href="${url}" style="color:#1d6a80">לאזור האישי</a></p>` : ""}
 </div>
 <p style="font-size:12px;color:#55656b;text-align:center;margin-top:12px">SST™ · המרכז</p>
@@ -35,7 +42,13 @@ ${url ? `<p style="margin:16px 0 0"><a href="${url}" style="color:#1d6a80">לא�
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [input.to], subject: input.subject, html, text: input.body.join("\n\n") }),
+      body: JSON.stringify({
+        from,
+        to: [input.to],
+        subject: input.subject,
+        html,
+        text: [...input.body, ...(input.link ? [`${input.link.label}: ${input.link.url}`] : [])].join("\n\n"),
+      }),
       cache: "no-store",
     });
     if (!res.ok) console.error(`Resend failed: ${res.status} ${(await res.text()).slice(0, 300)}`);
@@ -73,6 +86,18 @@ export function cancelledEmail(p: { toName: string; clientFirst: string; therapi
   return {
     subject: `המפגש ב${when(p.startsAt)} בוטל`,
     body: [`שלום ${p.toName},`, `המפגש של ${p.clientFirst} עם ${p.therapist} ב${when(p.startsAt)}${more} בוטל.`],
+  };
+}
+
+export function paymentRequestEmail(p: { toName: string; description: string; amount: number; url: string }) {
+  return {
+    subject: `דרישת תשלום · ${p.description}`,
+    body: [
+      `שלום ${p.toName},`,
+      `נשלחה אליך דרישת תשלום: ${p.description}, ${p.amount.toLocaleString("he-IL")} ₪.`,
+      "התשלום מאובטח (אשראי, ביט ועוד), וחשבונית מס/קבלה תישלח למייל מיד אחריו.",
+    ],
+    link: { label: "לתשלום", url: p.url },
   };
 }
 

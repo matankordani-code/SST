@@ -35,4 +35,28 @@ export const REGISTER_MESSAGE: Record<string, string> = {
   bad_date: "תאריך לא תקין לאימון הזה.",
 };
 
-export const hhmm = (t: string) => t.slice(0, 5);
+// Technique scores the coach gives (1–5), as in the prototype.
+export const SKILLS = ["takeoff", "paddling", "wave_reading", "turns"] as const;
+export type Skill = (typeof SKILLS)[number];
+export const SKILL_LABEL: Record<Skill, string> = {
+  takeoff: "טייק-אוף",
+  paddling: "חתירה",
+  wave_reading: "קריאת גלים",
+  turns: "פניות",
+};
+export const isSkill = (v: unknown): v is Skill => typeof v === "string" && (SKILLS as readonly string[]).includes(v);
+
+export type SkillRow = { skill: Skill; score: number; scored_on: string };
+export type Goal = { id: string; text: string; done: boolean };
+
+// Per skill: the score about a month ago (or the first one) and the latest.
+export function skillProgress(rows: SkillRow[], monthAgo: string): { skill: Skill; from: number | null; to: number | null }[] {
+  return SKILLS.map((skill) => {
+    const mine = rows.filter((r) => r.skill === skill).sort((a, b) => a.scored_on.localeCompare(b.scored_on));
+    if (mine.length === 0) return { skill, from: null, to: null };
+    const before = [...mine].reverse().find((r) => r.scored_on <= monthAgo) ?? mine[0];
+    return { skill, from: before.score, to: mine[mine.length - 1].score };
+  });
+}
+
+export const hhmm =(t: string) => t.slice(0, 5);

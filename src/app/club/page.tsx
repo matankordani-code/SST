@@ -58,8 +58,24 @@ async function Content({
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
 
+  // KPIs for the shown week, as in the prototype.
+  const active = members.filter((m) => m.is_active);
+  const communityCount = active.filter((m) => m.plan === "community").length;
+  const storageCount = active.filter((m) => m.plan === "storage").length;
+  const weekReg = regs.filter((r) => r.status === "registered").length;
+  const weekWait = regs.filter((r) => r.status === "waitlist").length;
+  const weekCapacity = trainings.filter((t) => t.is_active).reduce((n, t) => n + t.capacity, 0);
+  const occupancy = weekCapacity > 0 ? Math.round((weekReg / weekCapacity) * 100) : 0;
+  const fullTrainings = new Set(regs.filter((r) => r.status === "waitlist").map((r) => `${r.training_id}:${r.on_date}`)).size;
+
   return (
     <AppShell profile={profile} active="/club">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+        <ClubKpi label="מנויי קהילה" value={String(communityCount)} sub={`${storageCount} מנויי אחסון גלשן`} />
+        <ClubKpi label="הרשמות לאימונים" value={String(weekReg)} sub={`בשבוע ${formatDay(week)}`} />
+        <ClubKpi label="תפוסה ממוצעת" value={`${occupancy}%`} sub={`${weekReg} מתוך ${weekCapacity} מקומות`} />
+        <ClubKpi label="ברשימות המתנה" value={String(weekWait)} sub={fullTrainings ? `ב-${fullTrainings} אימונים מלאים` : "אין אימון מלא"} />
+      </div>
       <Card
         title={`לו״ז אימוני קהילה · שבוע ${formatDay(week)}`}
         actions={
@@ -170,7 +186,11 @@ async function Content({
               <tbody>
                 {members.map((m) => (
                   <tr key={m.id} className={"border-b border-[#EFEAE0] " + (m.is_active ? "" : "opacity-50")}>
-                    <td className="px-2 py-2.5 font-semibold">{m.full_name}</td>
+                    <td className="px-2 py-2.5 font-semibold">
+                      <Link href={`/club/members/${m.id}`} className="text-primary underline">
+                        {m.full_name}
+                      </Link>
+                    </td>
                     <td className="px-2 py-2.5">{m.plan === "community" ? "קהילה" : "אחסון גלשן"}</td>
                     <td className="px-2 py-2.5 tabular-nums">{visits.get(m.id) ?? 0}</td>
                     <td className="px-2 py-2.5 text-[13px] text-muted">{m.profile_id ? "פעיל" : m.email ? "ממתין לכניסה ראשונה" : "ללא מייל"}</td>
@@ -214,3 +234,13 @@ async function Content({
 }
 
 const navBtn = "flex min-h-10 items-center rounded-lg border border-field bg-white px-3 text-sm hover:bg-sand";
+
+function ClubKpi({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl border border-line bg-white p-4">
+      <span className="text-[13px] text-muted">{label}</span>
+      <span className="text-2xl font-bold tabular-nums">{value}</span>
+      <span className="text-[12px] text-muted">{sub}</span>
+    </div>
+  );
+}

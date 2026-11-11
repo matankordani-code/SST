@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import { NO_ID, myTherapistId } from "@/lib/view";
 import { AppShell, Card } from "@/components/app-shell";
 import { Loading } from "@/components/loading";
-import { StatusBadge } from "@/components/status-badge";
 import { SESSION_SELECT, type SessionRow } from "@/lib/sessions";
 import { addDays, dayKey, formatDay, israelToUtc, isDayKey, timeOf, weekStart } from "@/lib/time";
+import { WeekGrid, type GridSession } from "./week-grid";
 
 export default function CalendarPage({ searchParams }: PageProps<"/calendar">) {
   return (
@@ -39,7 +39,8 @@ async function Content({
     .order("starts_at");
   if (isOwner && filter && filter !== "all") query = query.eq("therapist_id", filter);
   // Own calendar only: filter explicitly (the owner viewing as a therapist sees everything through RLS).
-  if (!isOwner) query = query.eq("therapist_id", (await myTherapistId(profile, supabase)) ?? NO_ID);
+  const myId = isOwner ? null : await myTherapistId(profile, supabase);
+  if (!isOwner) query = query.eq("therapist_id", myId ?? NO_ID);
 
   const [{ data }, { data: therapists }] = await Promise.all([
     query,
@@ -48,12 +49,29 @@ async function Content({
       : Promise.resolve({ data: null }),
   ]);
   const sessions = (data ?? []) as unknown as SessionRow[];
+  const now = new Date().getTime();
+  const grid: GridSession[] = sessions.map((s) => ({
+    id: s.id,
+    day: dayKey(new Date(s.starts_at)),
+    time: timeOf(new Date(s.starts_at)),
+    client: s.client?.full_name ?? "",
+    therapist: s.therapist?.display_name ?? "",
+    status: s.status,
+    past: new Date(s.starts_at).getTime() < now,
+  }));
 
-  const byDay = new Map<string, SessionRow[]>();
-  for (const s of sessions) {
-    const k = dayKey(new Date(s.starts_at));
-    byDay.set(k, [...(byDay.get(k) ?? []), s]);
-  }
+  // Who can be booked from the grid: every client (whole calendar) or my own.
+  let clientsQuery = supabase
+    .from("clients")
+    .select("id, full_name, therapist:therapists(display_name)")
+    .eq("is_active", true)
+    .order("full_name");
+  if (!isOwner) clientsQuery = clientsQuery.eq("therapist_id", myId ?? NO_ID);
+  const { data: clientRows } = await clientsQuery;
+  const clientOptions = ((clientRows ?? []) as unknown as { id: string; full_name: string; therapist: { display_name: string } | null }[]).map(
+    (c) => ({ id: c.id, label: isOwner && c.therapist ? `${c.full_name} · ${c.therapist.display_name}` : c.full_name }),
+  );
+
   const days = Array.from({ length: 7 }, (_, i) => addDays(week, i));
   const qs = (w: string) => `/calendar?week=${w}${isOwner && filter ? `&t=${filter}` : ""}`;
 
@@ -112,50 +130,14 @@ async function Content({
           )}
         </div>
 
-        <div className="flex flex-col gap-3">
-          {days.map((d) => {
-            const list = byDay.get(d) ?? [];
-            return (
-              <div
-                key={d}
-                className={
-                  "rounded-lg border p-3 " +
-                  (d === today ? "border-primary bg-[#EEF5F7]" : "border-[#EFEAE0]")
-                }
-              >
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <h3 className="font-semibold">{formatDay(d)}</h3>
-                  <Link href={`/sessions/new?date=${d}`} className="text-[13px] text-primary underline">
-                    + מפגש
-                  </Link>
-                </div>
-                {list.length === 0 ? (
-                  <p className="text-[13px] text-muted">אין מפגשים</p>
-                ) : (
-                  <ul className="flex flex-col gap-1">
-                    {list.map((s) => (
-                      <li key={s.id}>
-                        <Link
-                          href={`/sessions/${s.id}`}
-                          className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded-md px-2 hover:bg-white"
-                        >
-                          <span className="font-semibold tabular-nums" dir="ltr">
-                            {timeOf(new Date(s.starts_at))}
-                          </span>
-                          <span>{s.client?.full_name}</span>
-                          {isOwner && (
-                            <span className="text-[13px] text-muted">{s.therapist?.display_name}</span>
-                          )}
-                          <StatusBadge status={s.status} />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <WeekGrid
+          key={sessions.map((x) => x.id + x.starts_at + x.status).join("|")}
+          days={days}
+          today={today}
+          sessions={grid}
+          clients={clientOptions}
+          showTherapist={isOwner}
+        />
       </Card>
     </AppShell>
   );
