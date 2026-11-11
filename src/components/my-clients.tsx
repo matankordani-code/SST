@@ -114,7 +114,7 @@ export async function MyClients({
   return (
     <>
       {tiles && (
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
         <Tile icon="check" tone="sage" label="טיפולים החודש" value={String(heldThisMonth)} sub={`התקיימו עד ${formatDate(today).slice(0, -5)}`} />
         <Tile icon="calendar" label="טיפולים בשבוע הזה" value={String(heldThisWeek)} sub={isOwner ? "היעד שלך: 8–12 בשבוע" : "שהתקיימו"} />
         {isOwner && <Tile icon="money" tone="sand" label="הכנסות החודש" value={formatShekel(monthIncome)} sub="בודדים שהתקיימו + כרטיסיות שנרכשו" />}

@@ -157,7 +157,7 @@ async function Content({ searchParams }: { searchParams: Promise<Record<string, 
           </form>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
           <Tile icon="money" tone="sage" label="נגבה בחודש" value={formatShekel(total)} sub={`${pays.length} תשלומים`} />
           <Tile icon="card" label="דרך לינק תשלום" value={formatShekel(viaLink)} sub="Morning, עם קבלה" />
           <Tile icon="check" tone="sand" label="נרשם ידנית" value={formatShekel(manual)} sub="ביט, מזומן, העברה" />

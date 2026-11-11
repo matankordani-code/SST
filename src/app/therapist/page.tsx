@@ -125,7 +125,7 @@ async function Content() {
   return (
     <AppShell profile={profile} active="/therapist" greet>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
         <Tile icon="clock" label="היום" value={String(todayCount)} sub={`${word} ב-${formatDay(today)}`} />
         <Tile icon="calendar" tone="sage" label="השבוע" value={String(weekHeld + weekPlanned)} sub={`${weekHeld} התקיימו · ${weekPlanned} מתוכננים`} />
         <Tile icon="check" tone="sand" label="התקיימו החודש" value={String(heldMonth)} sub={word} />
@@ -208,7 +208,7 @@ async function Content() {
       </div>
 
       <Card title="תשלומים ומעקב">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
           <Tile icon="money" tone="sage" label="נגבה החודש" value={formatShekel(paidMonth)} sub="מהמטופלים שלך" />
           <Tile
             icon="card"
