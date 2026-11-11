@@ -4,7 +4,31 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { signDeclarationAction } from "@/app/declarations/actions";
 import { Field, inputClass } from "@/components/field";
 
-export function SignForm({ id, token, kind }: { id: string; token: string; kind: "health" | "parental" }) {
+export type Prefill = {
+  client_name?: string | null;
+  client_phone?: string | null;
+  client_email?: string | null;
+  payer_name?: string | null;
+  payer_phone?: string | null;
+  payer_email?: string | null;
+};
+
+export function SignForm({
+  id,
+  token,
+  kind,
+  form,
+  prefill,
+  text,
+}: {
+  id: string;
+  token: string;
+  kind: "health" | "parental";
+  // Health declaration form: adult (18+) or a parent for their child. null = older links.
+  form: "adult" | "minor" | null;
+  prefill: Prefill;
+  text: string;
+}) {
   const [state, action, pending] = useActionState(signDeclarationAction.bind(null, id, token), undefined);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -29,17 +53,107 @@ export function SignForm({ id, token, kind }: { id: string; token: string; kind:
   }
 
   return (
-    <form action={action} className="flex flex-col gap-4 rounded-xl border border-line bg-white p-5">
-      <Field label={kind === "parental" ? "שם ההורה המלא *" : "שם מלא *"}>
-        <input name="signer" required className={inputClass} autoComplete="name" />
-      </Field>
-      <Field label="מידע רפואי שחשוב שנדע (מגבלות, תרופות, פציעות). אם אין, השאר/י ריק">
+    <form action={action} className="flex flex-col gap-5">
+      {form && <input type="hidden" name="form" value={form} />}
+
+      {form === "adult" && (
+        <fieldset className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+          <legend className="px-1 text-lg font-bold">פרטי המשתתף/ת</legend>
+          <div className={grid}>
+            <Field label="שם פרטי *">
+              <input name="first_name" required defaultValue={first(prefill.client_name)} autoComplete="given-name" className={inputClass} />
+            </Field>
+            <Field label="שם משפחה *">
+              <input name="last_name" required defaultValue={rest(prefill.client_name)} autoComplete="family-name" className={inputClass} />
+            </Field>
+            <Field label="ת״ז *">
+              <input name="id_number" required inputMode="numeric" pattern={ID_PATTERN} maxLength={9} className={inputClass} />
+            </Field>
+            <Field label="תאריך לידה *">
+              <input name="birth_date" type="date" required className={inputClass} />
+            </Field>
+            <Field label="עיר">
+              <input name="city" autoComplete="address-level2" className={inputClass} />
+            </Field>
+            <Field label="טלפון נייד *">
+              <input name="phone" type="tel" required defaultValue={prefill.client_phone ?? ""} autoComplete="tel" className={inputClass} dir="ltr" />
+            </Field>
+            <Field label="אימייל">
+              <input name="email" type="email" defaultValue={prefill.client_email ?? ""} autoComplete="email" className={inputClass} dir="ltr" />
+            </Field>
+          </div>
+        </fieldset>
+      )}
+
+      {form === "minor" && (
+        <>
+          <fieldset className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+            <legend className="px-1 text-lg font-bold">פרטי הילד/ה</legend>
+            <div className={grid}>
+              <Field label="שם פרטי *">
+                <input name="child_first" required defaultValue={first(prefill.client_name)} className={inputClass} />
+              </Field>
+              <Field label="שם משפחה *">
+                <input name="child_last" required defaultValue={rest(prefill.client_name)} className={inputClass} />
+              </Field>
+              <Field label="ת״ז">
+                <input name="child_id" inputMode="numeric" pattern={ID_PATTERN} maxLength={9} className={inputClass} />
+              </Field>
+              <Field label="תאריך לידה *">
+                <input name="child_birth" type="date" required className={inputClass} />
+              </Field>
+            </div>
+          </fieldset>
+          <fieldset className="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">
+            <legend className="px-1 text-lg font-bold">פרטי ההורה החותם/ת</legend>
+            <div className={grid}>
+              <Field label="שם מלא *">
+                <input name="parent_name" required defaultValue={prefill.payer_name ?? ""} autoComplete="name" className={inputClass} />
+              </Field>
+              <Field label="ת״ז *">
+                <input name="parent_id" required inputMode="numeric" pattern={ID_PATTERN} maxLength={9} className={inputClass} />
+              </Field>
+              <Field label="טלפון נייד *">
+                <input name="phone" type="tel" required defaultValue={prefill.payer_phone ?? prefill.client_phone ?? ""} autoComplete="tel" className={inputClass} dir="ltr" />
+              </Field>
+              <Field label="אימייל">
+                <input name="email" type="email" defaultValue={prefill.payer_email ?? prefill.client_email ?? ""} autoComplete="email" className={inputClass} dir="ltr" />
+              </Field>
+              <Field label="עיר">
+                <input name="city" autoComplete="address-level2" className={inputClass} />
+              </Field>
+            </div>
+          </fieldset>
+        </>
+      )}
+
+      <article className="whitespace-pre-wrap rounded-xl border border-line bg-white p-5 leading-relaxed">{text}</article>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-line bg-white p-5">
+      {!form && (
+        <Field label={kind === "parental" ? "שם ההורה המלא *" : "שם מלא *"}>
+          <input name="signer" required className={inputClass} autoComplete="name" />
+        </Field>
+      )}
+      <Field
+        label={
+          form === "minor"
+            ? "מידע רפואי על הילד/ה שחשוב שנדע (מגבלות, תרופות, פציעות, רגישויות). אם אין, השאר/י ריק"
+            : "מידע רפואי שחשוב שנדע (מגבלות, תרופות, פציעות, רגישויות). אם אין, השאר/י ריק"
+        }
+      >
         <textarea name="notes" rows={3} className={inputClass + " py-2.5"} />
       </Field>
-      <label className="flex min-h-11 cursor-pointer items-center gap-2">
-        <input type="checkbox" name="agree" className="size-5 accent-primary" />
-        קראתי את הנוסח ואני מאשר/ת
+      <label className="flex min-h-11 cursor-pointer items-start gap-2">
+        <input type="checkbox" name="agree" className="mt-0.5 size-5 shrink-0 accent-primary" />
+        {form ? "קראתי את מסמך זה במלואו, הבנתי אותו ואני מסכים/ה לתוכנו *" : "קראתי את הנוסח ואני מאשר/ת"}
       </label>
+      {form && (
+        <label className="flex min-h-11 cursor-pointer items-start gap-2">
+          <input type="checkbox" name="marketing" className="mt-0.5 size-5 shrink-0 accent-primary" />
+          אני מאשר/ת קבלת חומר פרסומי מהמועדון במייל ובהודעות SMS (לא חובה)
+        </label>
+      )}
       <div className="flex flex-col gap-1">
         <span className="text-[13px] text-muted">חתימה (באצבע או בעכבר)</span>
         <canvas
@@ -93,6 +207,12 @@ export function SignForm({ id, token, kind }: { id: string; token: string; kind:
       >
         {pending ? "שולח…" : "חתימה ושליחה"}
       </button>
+      </div>
     </form>
   );
 }
+
+const grid = "grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3";
+const ID_PATTERN = "[0-9]{5,9}";
+const first = (name?: string | null) => (name ?? "").trim().split(" ")[0] ?? "";
+const rest = (name?: string | null) => (name ?? "").trim().split(" ").slice(1).join(" ");

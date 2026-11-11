@@ -15,6 +15,7 @@ import { seesMoney } from "@/lib/permissions";
 import { ReportButton } from "@/components/report-panel";
 import { formatDateTime } from "@/lib/time";
 import { DeclarationsCard } from "@/components/declarations-card";
+import { defaultForm } from "@/lib/declarations";
 import { PortalInvite } from "@/components/portal-invite";
 
 export default function ClientPage({ params }: PageProps<"/clients/[id]">) {
@@ -119,7 +120,7 @@ async function Content({ params }: { params: Promise<{ id: string }> }) {
         </dl>
       </Card>
 
-      {profile.role !== "surf_instructor" && <DeclarationsCard clientId={id} hasPayer={!!client.payer} />}
+      {profile.role !== "surf_instructor" && <DeclarationsCard clientId={id} suggested={defaultForm({ age: client.age, payer_id: client.payer ? "payer" : null })} />}
       {money && <ClientPayments clientId={id} rate={client.rate} />}
       <Card title="אזור אישי למשלם">
         <PortalInvite clientId={id} />

@@ -56,7 +56,8 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
 
   if (error || !data) return { error: "השמירה נכשלה. נסה שוב." };
 
-  // Health declaration (+ parental consent for a minor) goes out by email right away.
+  // Health declaration goes out by email right away: the parent's form for a minor
+  // (or when someone else pays), the adult form otherwise.
   const payerEmail = payerIsOther ? text(fd, "payer_email") : text(fd, "email");
   const intake = {
     clientId: data as string,
@@ -64,6 +65,7 @@ export async function createClientAction(_: FormState, fd: FormData): Promise<Fo
     age,
     toEmail: payerEmail || null,
     toName: payerIsOther ? payerName : fullName,
+    hasPayer: payerIsOther,
   };
   after(() => sendIntakeDeclarations(supabase, intake));
   redirect(`/clients/${data}`);
